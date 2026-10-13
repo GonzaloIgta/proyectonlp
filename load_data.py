@@ -1,7 +1,13 @@
-from datasets import load_dataset
+import os
 
-ds = load_dataset("Tobi-Bueck/customer-support-tickets", split="train")
-ds.save_to_disk("data/tickets")
+from datasets import load_dataset, load_from_disk
 
-# O como CSV:
-ds.to_csv("data/tickets.csv", index=False)
+PATH = "data/tickets"
+
+if not os.path.exists(os.path.join(PATH, "dataset_dict.json")):
+    load_dataset("Tobi-Bueck/customer-support-tickets").save_to_disk(PATH)
+
+# Carga unicamente el train desde disco
+train = load_from_disk(os.path.join(PATH, "train"))
+
+print(train)
