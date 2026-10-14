@@ -1,0 +1,92 @@
+{
+  "builder_name": "csv",
+  "citation": "",
+  "config_name": "default",
+  "dataset_name": "customer-support-tickets",
+  "dataset_size": 56290512,
+  "description": "",
+  "download_size": 53123584,
+  "features": {
+    "subject": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "body": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "answer": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "type": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "queue": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "priority": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "language": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "version": {
+      "dtype": "int64",
+      "_type": "Value"
+    },
+    "tag_1": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "tag_2": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "tag_3": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "tag_4": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "tag_5": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "tag_6": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "tag_7": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "tag_8": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 109414096,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 56290512,
+      "num_examples": 61765,
+      "dataset_name": "customer-support-tickets"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}
