@@ -1,0 +1,2 @@
+pipreqs . --scan-notebooks --savepath requirements.txt
+uv add -r requirements.txt
