@@ -57,9 +57,7 @@ joblib.dump(vectorizer, OUTDIR / "tfidf_vectorizer.joblib")
 
 
 
-########################################
-# NUEVO: TOP PALABRAS
-########################################
+# TOP PALABRAS
 TOP_N = 20
 feature_names = vectorizer.get_feature_names_out()
 
