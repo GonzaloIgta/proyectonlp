@@ -1,27 +1,28 @@
 from pathlib import Path
 
+import json
+
 import joblib
 import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-from spacy.lang.de.stop_words import STOP_WORDS as STOP_DE
 from spacy.lang.en.stop_words import STOP_WORDS as STOP_EN
 
 PATH = Path("data") / "tickets"
-DATAPATH = PATH / "dataprocessed" / "dataprocessed.csv"  # salida del script anterior
+DATAPATH = PATH / "dataprocessed" / "dataprocessed.csv"  # salida de load_data.py (solo para queue/priority)
+TOKENS_PATH = PATH / "tokenized" / "tickets_tokens.jsonl"  # salida de preprocess.py
 OUTDIR = PATH / "features"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
 data = pd.read_csv(DATAPATH)
 
-# Un string por ticket: asunto + cuerpo (NO se usa 'answer': no existe al clasificar)
-corpus = (
-    (data["subject"].fillna("") + " " + data["body"].fillna(""))
-    .str.strip()
-    .to_numpy()
-)
+# Un string por ticket a partir de los tokens ya procesados (asunto + cuerpo; NO 'answer').
+# Mismo orden que dataprocessed.csv, así idx_train/idx_test siguen valiendo para queue/priority/tags
+with TOKENS_PATH.open(encoding="utf-8") as f:
+    corpus = np.array([" ".join(json.loads(linea)["tokens"]) for linea in f])
+assert len(corpus) == len(data), "tokens y CSV desalineados: ejecuta preprocess.py"
 
 # El dataset solo trae 'train', así que el split lo hacemos aquí
 idx = np.arange(len(data))
@@ -33,8 +34,8 @@ idx_train, idx_test = train_test_split(
 )
 
 vectorizer = TfidfVectorizer(
-    lowercase=True,
-    stop_words=sorted(STOP_EN | STOP_DE),  # dataset en inglés + alemán
+    lowercase=False,  # los tokens ya vienen en minúsculas
+    stop_words=sorted(STOP_EN),  # dataset solo en inglés (alemán eliminado en load_data.py)
     min_df=2,
     max_df=0.9,
     ngram_range=(1, 2),
