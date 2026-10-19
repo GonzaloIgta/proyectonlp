@@ -22,6 +22,10 @@ nlp.add_pipe("sentencizer")
 
 def limpiar_texto(texto: str) -> str:
     """Normaliza el texto crudo antes de tokenizar."""
+    # Etiquetas HTML de salto de línea (<br>, <br/>, <br />) y restos rotos como '<brWarm'
+    texto = re.sub(r"<br\s*/?>|<br(?=\w)", " ", texto, flags=re.IGNORECASE)
+    # Placeholders de anonimización (<name>, <tel_num>, <acc_num>...): no aportan significado
+    texto = re.sub(r"<[a-z_]+>", " ", texto)
     # En el CSV los saltos de línea vienen como el texto literal '\n' (barra + n)
     texto = texto.replace("\\n", "\n")
     # Espacios y saltos repetidos -> uno solo (los saltos separan párrafos, los dejamos como espacio)
