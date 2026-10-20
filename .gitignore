@@ -1,0 +1,8 @@
+# Entorno virtual y cachés
+env/
+.venv/
+__pycache__/
+*.pyc
+
+# Notas locales de Claude (no se suben)
+CLAUDE.md
