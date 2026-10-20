@@ -1,0 +1,14 @@
+{
+  "n_tickets": 28260,
+  "n_train": 22608,
+  "n_test": 5652,
+  "archivos": {
+    "export/tickets_processed.jsonl": "Un ticket por línea: id, split, text, sentences, tokens, queue, priority, type, tags. Leer con pd.read_json(..., lines=True).",
+    "features/X_train.npz, X_test.npz": "Matrices TF-IDF dispersas (sparse.load_npz). Filas = tickets de idx_train / idx_test.",
+    "features/idx_train.npy, idx_test.npy": "Valores de 'id' de cada split, en el orden de las filas de X_train / X_test.",
+    "features/tfidf_vectorizer.joblib": "TfidfVectorizer ajustado con train (joblib.load).",
+    "features/vocab.json": "Vocabulario (token <-> índice, con <UNK>) construido con train. Vocabulary.from_serializable.",
+    "embeddings/ticket_vectors.npy": "Matriz (n_tickets x 100): media de los vectores GloVe de cada ticket. Fila i = ticket con id i.",
+    "embeddings/oov_words.csv": "Palabras de los tickets sin vector en GloVe y su frecuencia."
+  }
+}
