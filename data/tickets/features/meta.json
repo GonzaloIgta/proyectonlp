@@ -1,0 +1,89 @@
+{
+  "dataset": "Tobi-Bueck/customer-support-tickets",
+  "n_tickets": 28260,
+  "n_train": 22608,
+  "n_test": 5652,
+  "split": {
+    "test_size": 0.2,
+    "random_state": 42,
+    "stratify": "queue"
+  },
+  "cleaning": "se eliminan body vacío y tickets en alemán (language == 'de')",
+  "tokenization": "oraciones (saltos de línea y . ! ?) -> normalización (<url>, <email>, <num>, minúsculas) -> regex; sin lematizar ni quitar stopwords",
+  "vocabulary": {
+    "min_freq": 2,
+    "size": 4897,
+    "unk_token": "<UNK>",
+    "unk_index": 0
+  },
+  "tfidf": {
+    "shape_train": [
+      22608,
+      71191
+    ],
+    "ngram_range": [
+      1,
+      2
+    ],
+    "min_df": 2,
+    "max_df": 0.9,
+    "stop_words": "spaCy EN"
+  },
+  "embeddings": {
+    "pretrained": {
+      "name": "word2vec-google-news-300",
+      "dim": 300
+    },
+    "word2vec_own": {
+      "vector_size": 300,
+      "window": 5,
+      "min_count": 2,
+      "sg": 1,
+      "epochs": 20,
+      "workers": 4,
+      "seed": 42
+    }
+  },
+  "label_columns": [
+    "queue",
+    "priority",
+    "type",
+    "tags"
+  ],
+  "tag_columns": [
+    "tag_1",
+    "tag_2",
+    "tag_3",
+    "tag_4",
+    "tag_5",
+    "tag_6",
+    "tag_7",
+    "tag_8"
+  ],
+  "label_maps": {
+    "queue": {
+      "Billing and Payments": 0,
+      "Customer Service": 1,
+      "General Inquiry": 2,
+      "Human Resources": 3,
+      "IT Support": 4,
+      "Product Support": 5,
+      "Returns and Exchanges": 6,
+      "Sales and Pre-Sales": 7,
+      "Service Outages and Maintenance": 8,
+      "Technical Support": 9
+    },
+    "priority": {
+      "high": 0,
+      "low": 1,
+      "medium": 2
+    },
+    "type": {
+      "Change": 0,
+      "Incident": 1,
+      "Problem": 2,
+      "Request": 3
+    }
+  },
+  "feature_policy": "answer NO es feature de clasificación; solo se usa (train) como texto extra para Word2Vec"
+}
