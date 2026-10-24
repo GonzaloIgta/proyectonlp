@@ -12,14 +12,14 @@
   "tokenization": "oraciones (saltos de línea y . ! ?) -> normalización (<url>, <email>, <num>, minúsculas) -> regex; sin lematizar ni quitar stopwords",
   "vocabulary": {
     "min_freq": 2,
-    "size": 4897,
+    "size": 4943,
     "unk_token": "<UNK>",
     "unk_index": 0
   },
   "tfidf": {
     "shape_train": [
       22608,
-      71191
+      71492
     ],
     "ngram_range": [
       1,

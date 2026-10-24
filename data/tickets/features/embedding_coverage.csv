@@ -1,10 +1,10 @@
 embedding,conjunto,tipos,% tipos OOV,tokens,% tokens OOV
-preentrenado (Google News),train vocab,4890,3.05,1366655,0.34
-preentrenado (Google News),test,4411,3.04,344092,0.33
-preentrenado (Google News),test sin stopwords,4199,3.19,197006,0.57
-w2v_all (propio),train vocab,4890,0.0,1366655,0.0
-w2v_all (propio),test,4411,7.14,344092,0.11
-w2v_all (propio),test sin stopwords,4199,7.41,197006,0.19
-w2v_tickets (propio),train vocab,4890,0.0,1366655,0.0
-w2v_tickets (propio),test,4411,10.02,344092,0.16
-w2v_tickets (propio),test sin stopwords,4199,10.41,197006,0.27
+preentrenado (Google News),train vocab,4937,3.77,1370296,0.47
+preentrenado (Google News),test,4453,3.73,344921,0.44
+preentrenado (Google News),test sin stopwords,4241,3.91,197835,0.76
+w2v_all (propio),train vocab,4937,0.0,1370296,0.0
+w2v_all (propio),test,4453,7.1,344921,0.11
+w2v_all (propio),test sin stopwords,4241,7.36,197835,0.2
+w2v_tickets (propio),train vocab,4937,0.0,1370296,0.0
+w2v_tickets (propio),test,4453,9.97,344921,0.16
+w2v_tickets (propio),test sin stopwords,4241,10.35,197835,0.27
