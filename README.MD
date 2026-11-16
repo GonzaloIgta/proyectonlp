@@ -1,20 +1,65 @@
-# Procesamiento y análisis de tickets de soporte (E2)
+# Clasificación automática de tickets de soporte
 
-Corpus: [`Tobi-Bueck/customer-support-tickets`](https://huggingface.co/datasets/Tobi-Bueck/customer-support-tickets) (HuggingFace). Objetivo del proyecto: dado un ticket, predecir `queue` (a quién va), `priority` (importancia) y `tags`. Esta entrega (E2) prepara el texto y sus representaciones.
+Corpus: [`Tobi-Bueck/customer-support-tickets`](https://huggingface.co/datasets/Tobi-Bueck/customer-support-tickets) (HuggingFace). Objetivo del proyecto: dado el asunto (`subject`) y el cuerpo (`body`) de un ticket, predecir `queue` (departamento, 10 clases), `priority` (3 niveles) y `type` (4 clases).
 
-Todo el código y la explicación están en un único notebook: [`src/tickets_pipeline.ipynb`](src/tickets_pipeline.ipynb). Las secciones de este README siguen los apartados del enunciado y remiten a las del notebook.
+---
 
 ## Instalación y ejecución
 
-```
+```powershell
 python -m venv env
 .\env\Scripts\Activate.ps1
-pip install -r requirements.txt        # o: pip install -e .
+pip install -r requirements.txt
+# Si se dispone de GPU NVIDIA (para E3):
+# pip install torch --index-url https://download.pytorch.org/whl/cu126
 ```
 
-Abrir `src/tickets_pipeline.ipynb` (kernel del `env`) y ejecutar todas las celdas **en orden**. El notebook usa rutas relativas a `src/` (`../data/...`). La primera vez descarga el dataset y GloVe (~130 MB, a la caché de gensim).
+- **E2:** abrir `src/tickets_pipeline.ipynb` y ejecutar todas las celdas en orden (con `src/` como directorio de trabajo).
+- **E3:** abrir [`src/Entrega_3_NLP.ipynb`](src/Entrega_3_NLP.ipynb) y ejecutar todas las celdas en orden (funciona tanto desde `src/` como desde la raíz). Para una prueba rápida con el 20 % de los datos, 1 semilla y 2 épocas, definir `E3_FAST=1`.
+- Para regenerar `src/Entrega_3_NLP.ipynb` tras editar los scripts `src/e3_parte*.py`:
 
-## 0. Datos y limpieza (secciones 1-2 del notebook)
+```powershell
+python src/build_notebook.py
+```
+
+---
+
+## Entrega 3 (E3) · Primera iteración de modelado
+
+Todo el código de E3 está en [`src/Entrega_3_NLP.ipynb`](src/Entrega_3_NLP.ipynb), generado con [`src/build_notebook.py`](src/build_notebook.py) a partir de los módulos `src/e3_parte1_datos_shallow.py`, `src/e3_parte2_embeddings.py` y `src/e3_parte3_deep_evaluacion.py`.
+
+### Continuidad con E2 y corrección de fuga de datos
+
+E3 parte directamente del dataset bruto guardado en E2 (`data/tickets/raw/dataraw.csv`, 61.765 filas) y aplica sus mismos filtros (`language != "de"` y `body` no vacío → **28.260 tickets**).
+
+Al analizar el texto para entrenar modelos supervisados se detectó que dos de los ficheros originales de HuggingFace comparten **4.516 grupos de duplicados exactos** (9.032 tickets idénticos). En el split 80/20 de E2, el **26,2 %** de los tickets de test tenía un gemelo exacto en train. Por ello, E3:
+
+1. Elimina duplicados y trabaja con **23.744 tickets únicos**.
+2. Introduce una partición estratificada por `queue` **70 % train / 15 % validación / 15 % test** (`random_state=42`).
+3. Recalcula TF-IDF, vocabulario (`<PAD>`, `<UNK>`) y Word2Vec propio exclusivamente sobre el `train` sin duplicados para evitar fuga hacia validación y test.
+
+### Experimentos incluidos
+
+- **Shallow learning (TF-IDF):** `Naive Bayes` (Multinomial / Complement), `Regresión logística` y `SVM lineal`, con búsqueda en rejilla sobre unigramas/bigramas, stopwords e hiperparámetros de regularización, más combinación con **12 meta-features de forma**.
+- **Deep learning:** `TextCNN` (filtros 3, 4, 5) y `BiRNN` (LSTM/GRU bidireccional) comparando **5 variantes de embeddings** (Aleatorio, Google News congelado / fine-tuning, Word2Vec propio congelado / fine-tuning).
+- **Atención y modelos híbridos:** comparación sin atención, producto escalar y atención general de Luong, inspección de pesos por token y concatenación de meta-features en las redes.
+- **Tres tareas:** `queue` (F1 macro), `priority` (incluyendo `recall_high`) y `type`.
+
+### Artefactos generados (`artifacts/`)
+
+- `artifacts/resultados.csv` y `artifacts/resultados.json`: métricas y resúmenes para el informe.
+- `artifacts/figuras/*.png`: 7 gráficas listas para la memoria.
+- `artifacts/emb_google_news_*.npz`: caché de vectores de Google News filtrados al vocabulario.
+
+> **Nota:** los resultados guardados actualmente en `artifacts/` corresponden a una ejecución rápida de validación (`E3_FAST=1`, 1 semilla y 2 épocas). Ejecutar el notebook completo con `E3_FAST=0` (~45 min en GPU) para obtener las métricas finales con 3 semillas y hasta 40 épocas.
+
+---
+
+## Entrega 2 (E2) · Procesamiento y análisis de datos
+
+Todo el código y la explicación de E2 están en [`src/tickets_pipeline.ipynb`](src/tickets_pipeline.ipynb). La primera vez descarga el dataset y GloVe/Word2Vec a la caché de gensim.
+
+### 0. Datos y limpieza (secciones 1-2 del notebook)
 
 El dataset solo trae el split `train`, así que el train/test lo hacemos nosotros. Limpieza:
 
@@ -25,7 +70,7 @@ El dataset solo trae el split `train`, así que el train/test lo hacemos nosotro
 
 **Texto de entrada:** `subject` + `body`. La columna `answer` **no se usa**: en el momento de clasificar un ticket nuevo todavía no existe respuesta, y usarla sería hacer trampa.
 
-## 1. Tokenización y división en oraciones (sección 3)
+### 1. Tokenización y división en oraciones (sección 3)
 
 | Paso | Qué se hace | Por qué |
 |---|---|---|
@@ -40,9 +85,7 @@ El dataset solo trae el split `train`, así que el train/test lo hacemos nosotro
 
 **Vocabulario (sección 4):** clase `Vocabulary` (token ↔ índice, con `<UNK>`) construida solo con train y con corte por frecuencia (`MIN_FREQ = 2`). Se guarda en `features/vocab.json`.
 
-## 2. Representación TF-IDF (secciones 5-6)
-
-**Por qué TF-IDF y no Bag of Words:** BoW cuenta apariciones, así que palabras omnipresentes (`please`, `support`) dominan el vector. TF-IDF multiplica por la rareza de la palabra en todo el corpus, lo que destaca las palabras que distinguen una cola de otra (`invoice`, `outage`). Para clasificar tickets suele funcionar mejor.
+### 2. Representación TF-IDF (secciones 5-6)
 
 Configuración del `TfidfVectorizer`:
 
@@ -57,63 +100,35 @@ Configuración del `TfidfVectorizer`:
 **Split:** 80 % train / 20 % test (**22.608 / 5.652** tickets), `random_state=42` y estratificado por `queue`.
 **Sin fuga de información:** el vectorizador se ajusta (`fit`) **solo con train**; test solo se transforma.
 
-Resultado: matrices dispersas de **70.948 términos**. Se guardan como `.npz` porque casi todas las celdas son ceros; densas ocuparían más de 12 GB, dispersas unos 12 MB.
+### 3. Word embeddings (secciones 7-9)
 
-## 3. Word embeddings (sección 7)
+Se analizan GloVe (`glove-wiki-gigaword-100`), Word2Vec preentrenado (`word2vec-google-news-300`) y Word2Vec propio (`w2v_all`, `w2v_tickets`), con exportación de matrices de embeddings, vectores de documento y análisis OOV en `data/tickets/features/` y `data/tickets/embeddings/`.
 
-**Modelo:** GloVe `glove-wiki-gigaword-100` (gensim): 400.000 palabras, 100 dimensiones, en minúsculas.
+### 4. Estructura reutilizable (sección 10)
 
-**Adaptación de tokens:** GloVe separa las contracciones (`don't` → `do` + `n't`) y nuestro tokenizador no. Solo para buscar el vector se parten igual, y los marcadores `<num>`, `<url>`, `<email>` se ignoran. Así no se cuentan como OOV palabras que sí existen.
+Salida en `data/tickets/export/` (`tickets_processed.jsonl`, `manifest.json`) y `data/tickets/features/` (`corpus.jsonl`, `vocab.json`, `labels.json`, `meta.json`, `X_train.npz`, `X_test.npz`, `idx_train.npy`, `idx_test.npy`).
 
-**Vector por ticket:** media de los vectores de sus palabras (las OOV se ignoran). Resultado: `ticket_vectors.npy`, de forma (28.260 × 100).
-
-### Análisis de palabras sin vector (OOV)
-
-| Medida | Resultado |
-|---|---|
-| Palabras distintas sin vector | **247 de 5.955 (4,1 %)** |
-| Apariciones sin vector | **7.763 de 1.716.336 tokens (0,5 %)** |
-| Tickets sin ninguna palabra con vector | 2 |
-
-La lista completa está en `data/tickets/embeddings/oov_words.csv`. Las más frecuentes son nombres de producto o tecnología (`clickup`, `elasticsearch`, `smartsheet`, `redis`, `airtable`, `zapier`, `kubernetes`).
-
-**Por qué hay OOV:** GloVe se entrenó con Wikipedia y noticias, y estas marcas técnicas casi no aparecen. Además, el modelo descarta palabras raras.
-
-**¿Hace falta un Word2Vec propio?** El número de OOV **no es grande**: el 4,1 % de las palabras distintas y solo el 0,5 % del texto. Casi todo el contenido queda cubierto, así que entrenar un Word2Vec propio no es imprescindible. Su ventaja sería cubrir las marcas técnicas, y con 28.000 tickets habría vocabulario para hacerlo como complemento. *(Decisión pendiente de confirmar por el equipo.)*
-
-## 4. Estructura reutilizable (sección 8)
-
-Salida en `data/tickets/export/`:
-
-- `tickets_processed.jsonl`: **un ticket por línea**, con `id`, `split`, `text`, `sentences`, `tokens`, `n_sentences`, `n_tokens`, `queue`, `priority`, `type` y `tags` (lista, sin vacíos).
-- `manifest.json`: qué es cada archivo y cómo cargarlo.
-
-**Por qué JSONL:** admite listas (oraciones, tokens, tags) dentro de cada registro, que un CSV no representa bien, y se lee línea a línea. Las matrices numéricas **no** van en el JSON porque son grandes; se guardan en `.npz` / `.npy` y se alinean con el JSON por `id` (la fila *i* de cada matriz es el ticket con `id == i`).
-
-Ejemplo de carga:
-
-```python
-import numpy as np, pandas as pd
-from scipy import sparse
-
-df = pd.read_json("data/tickets/export/tickets_processed.jsonl", lines=True)
-X_train = sparse.load_npz("data/tickets/features/X_train.npz")
-idx_train = np.load("data/tickets/features/idx_train.npy")   # ids de las filas de X_train
-y_train = df.loc[idx_train, "queue"]
-vectores = np.load("data/tickets/embeddings/ticket_vectors.npy")  # (28260, 100)
-```
+---
 
 ## Estructura del proyecto
 
 ```
-src/tickets_pipeline.ipynb      # todo el código y la explicación
+src/
+  tickets_pipeline.ipynb        # E2: limpieza, tokenización, TF-IDF, embeddings y exportación
+  Entrega_3_NLP.ipynb           # E3: shallow learning, CNN/BiRNN con atención y evaluación
+  e3_parte1_datos_shallow.py    # E3 bloque 0-4 (datos, deduplicación, métricas, shallow + meta)
+  e3_parte2_embeddings.py       # E3 bloque 5.1-5.2 (secuencias y matrices de embeddings)
+  e3_parte3_deep_evaluacion.py  # E3 bloque 5.3-7 (CNN, BiRNN, atención, prioridad/tipo, análisis)
+  build_notebook.py             # Genera src/Entrega_3_NLP.ipynb desde los scripts e3_parte*.py
 data/tickets/
   raw/  dataprocessed/  features/  embeddings/  export/
+artifacts/
+  resultados.csv  resultados.json  emb_google_news_*.npz  figuras/
 ```
 
 ## Actualizar dependencias
 
-```
+```powershell
 pipreqs . --scan-notebooks --savepath requirements.txt
 uv add -r requirements.txt
 ```

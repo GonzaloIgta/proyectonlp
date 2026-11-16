@@ -1,0 +1,1640 @@
+{
+ "particiones": {
+  "train": 3324,
+  "val": 712,
+  "test": 712
+ },
+ "tickets_e2": 28260,
+ "tickets_unicos": 23744,
+ "fuga": [
+  {
+   "partición": "E2 (con duplicados)",
+   "tickets": 28260,
+   "test con gemelo en train": "26.2%",
+   "accuracy": 0.7563694267515924,
+   "f1 macro": 0.7589153370506306
+  },
+  {
+   "partición": "E3 (sin duplicados)",
+   "tickets": 23744,
+   "test con gemelo en train": "0.0%",
+   "accuracy": 0.6632975363234365,
+   "f1 macro": 0.6578646278446213
+  }
+ ],
+ "clases": {
+  "queue": {
+   "Technical Support": 1364,
+   "Product Support": 911,
+   "Customer Service": 685,
+   "IT Support": 560,
+   "Billing and Payments": 487,
+   "Returns and Exchanges": 241,
+   "Service Outages and Maintenance": 194,
+   "Sales and Pre-Sales": 150,
+   "Human Resources": 86,
+   "General Inquiry": 70
+  },
+  "priority": {
+   "medium": 1990,
+   "high": 1818,
+   "low": 940
+  },
+  "type": {
+   "Incident": 1888,
+   "Request": 1402,
+   "Problem": 927,
+   "Change": 531
+  }
+ },
+ "vocabulario": 3023,
+ "tfidf_features": {
+  "unigramas": 2935,
+  "unigramas, sin stopwords": 2749,
+  "uni+bigramas": 19521,
+  "uni+bigramas, sin stopwords": 16123
+ },
+ "mejor_shallow": {
+  "queue": {
+   "Naive Bayes": {
+    "tfidf": "uni+bigramas, sin stopwords",
+    "params": {
+     "variante": "multinomial",
+     "alpha": 0.01
+    },
+    "f1_val": 0.30169172688204265
+   },
+   "Regresión logística": {
+    "tfidf": "uni+bigramas, sin stopwords",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced"
+    },
+    "f1_val": 0.2940859338729006
+   },
+   "SVM lineal": {
+    "tfidf": "uni+bigramas, sin stopwords",
+    "params": {
+     "C": 0.03,
+     "class_weight": "balanced"
+    },
+    "f1_val": 0.2610850960187295
+   }
+  },
+  "priority": {
+   "Naive Bayes": {
+    "tfidf": "uni+bigramas, sin stopwords",
+    "params": {
+     "variante": "multinomial",
+     "alpha": 0.01
+    },
+    "f1_val": 0.4548455342303157
+   },
+   "Regresión logística": {
+    "tfidf": "uni+bigramas",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced"
+    },
+    "f1_val": 0.45906527985871354
+   },
+   "SVM lineal": {
+    "tfidf": "uni+bigramas, sin stopwords",
+    "params": {
+     "C": 0.03,
+     "class_weight": "balanced"
+    },
+    "f1_val": 0.40019331938346264
+   }
+  },
+  "type": {
+   "Naive Bayes": {
+    "tfidf": "uni+bigramas",
+    "params": {
+     "variante": "multinomial",
+     "alpha": 0.05
+    },
+    "f1_val": 0.7761399128966119
+   },
+   "Regresión logística": {
+    "tfidf": "uni+bigramas",
+    "params": {
+     "C": 1.0,
+     "class_weight": "balanced"
+    },
+    "f1_val": 0.8011092727786975
+   },
+   "SVM lineal": {
+    "tfidf": "unigramas",
+    "params": {
+     "C": 0.03,
+     "class_weight": "balanced"
+    },
+    "f1_val": 0.7586718705649754
+   }
+  }
+ },
+ "grid_shallow_queue": [
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "unigramas",
+   "variante": "multinomial",
+   "alpha": 0.01,
+   "f1_val": 0.2720742299975175,
+   "acc_val": 0.39325842696629215,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "unigramas, sin stopwords",
+   "variante": "multinomial",
+   "alpha": 0.01,
+   "f1_val": 0.2644992196952717,
+   "acc_val": 0.3946629213483146,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "uni+bigramas",
+   "variante": "multinomial",
+   "alpha": 0.01,
+   "f1_val": 0.2718639110114895,
+   "acc_val": 0.3890449438202247,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "uni+bigramas, sin stopwords",
+   "variante": "multinomial",
+   "alpha": 0.01,
+   "f1_val": 0.30169172688204265,
+   "acc_val": 0.41151685393258425,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "unigramas",
+   "variante": "multinomial",
+   "alpha": 0.05,
+   "f1_val": 0.260779091000616,
+   "acc_val": 0.3904494382022472,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "unigramas, sin stopwords",
+   "variante": "multinomial",
+   "alpha": 0.05,
+   "f1_val": 0.27341423116499153,
+   "acc_val": 0.398876404494382,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "uni+bigramas",
+   "variante": "multinomial",
+   "alpha": 0.05,
+   "f1_val": 0.24914900921013278,
+   "acc_val": 0.3862359550561798,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Naive Bayes",
+   "tfidf": "uni+bigramas, sin stopwords",
+   "variante": "multinomial",
+   "alpha": 0.05,
+   "f1_val": 0.26734601372158084,
+   "acc_val": 0.4002808988764045,
+   "C": null,
+   "class_weight": null
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "unigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.22516142173691378,
+   "acc_val": 0.37640449438202245,
+   "C": 1.0,
+   "class_weight": null
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "unigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.22292344146238507,
+   "acc_val": 0.37780898876404495,
+   "C": 1.0,
+   "class_weight": null
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "uni+bigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.2202701972823924,
+   "acc_val": 0.38342696629213485,
+   "C": 1.0,
+   "class_weight": null
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "uni+bigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.22701160034928494,
+   "acc_val": 0.3862359550561798,
+   "C": 1.0,
+   "class_weight": null
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "unigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.2547651619148874,
+   "acc_val": 0.29353932584269665,
+   "C": 1.0,
+   "class_weight": "balanced"
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "unigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.2781286599440652,
+   "acc_val": 0.3258426966292135,
+   "C": 1.0,
+   "class_weight": "balanced"
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "uni+bigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.279851599957529,
+   "acc_val": 0.32724719101123595,
+   "C": 1.0,
+   "class_weight": "balanced"
+  },
+  {
+   "modelo": "Regresión logística",
+   "tfidf": "uni+bigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.2940859338729006,
+   "acc_val": 0.3595505617977528,
+   "C": 1.0,
+   "class_weight": "balanced"
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "unigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.18590819660079116,
+   "acc_val": 0.36657303370786515,
+   "C": 0.03,
+   "class_weight": null
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "unigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.20178396306197843,
+   "acc_val": 0.37640449438202245,
+   "C": 0.03,
+   "class_weight": null
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "uni+bigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.17160664337567072,
+   "acc_val": 0.36657303370786515,
+   "C": 0.03,
+   "class_weight": null
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "uni+bigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.18294304134055875,
+   "acc_val": 0.37359550561797755,
+   "C": 0.03,
+   "class_weight": null
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "unigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.24785115204329453,
+   "acc_val": 0.31179775280898875,
+   "C": 0.03,
+   "class_weight": "balanced"
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "unigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.24752179127942955,
+   "acc_val": 0.31179775280898875,
+   "C": 0.03,
+   "class_weight": "balanced"
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "uni+bigramas",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.25934800162381483,
+   "acc_val": 0.34691011235955055,
+   "C": 0.03,
+   "class_weight": "balanced"
+  },
+  {
+   "modelo": "SVM lineal",
+   "tfidf": "uni+bigramas, sin stopwords",
+   "variante": null,
+   "alpha": null,
+   "f1_val": 0.2610850960187295,
+   "acc_val": 0.34691011235955055,
+   "C": 0.03,
+   "class_weight": "balanced"
+  }
+ ],
+ "cobertura": [
+  {
+   "embedding": "Google News",
+   "tipos del vocabulario con vector": 0.9470374048328368,
+   "tokens de val con vector": 0.8884931618365354,
+   "tokens de test con vector": 0.8869663419847944
+  },
+  {
+   "embedding": "Word2Vec propio",
+   "tipos del vocabulario con vector": 1.0,
+   "tokens de val con vector": 0.9905568218821231,
+   "tokens de test con vector": 0.9902595438320527
+  }
+ ],
+ "busqueda_deep": {
+  "CNN": [
+   {
+    "tarea": "queue",
+    "modelo": "CNN · Google News congelado",
+    "arquitectura": "CNN",
+    "embedding": "Google News congelado",
+    "meta": false,
+    "n_filtros": 100,
+    "dropout": 0.3,
+    "pesos_clase": false,
+    "f1_val": 0.19172017575625944,
+    "f1_val_std": 0.0,
+    "mejor_epoca": 2.0,
+    "segundos": 3.7655112743377686
+   },
+   {
+    "tarea": "queue",
+    "modelo": "CNN · Google News congelado",
+    "arquitectura": "CNN",
+    "embedding": "Google News congelado",
+    "meta": false,
+    "n_filtros": 100,
+    "dropout": 0.3,
+    "pesos_clase": true,
+    "f1_val": 0.19129073942423064,
+    "f1_val_std": 0.0,
+    "mejor_epoca": 2.0,
+    "segundos": 0.5076160430908203
+   }
+  ],
+  "RNN": [
+   {
+    "tarea": "queue",
+    "modelo": "BiLSTM + atención · Google News congelado",
+    "arquitectura": "RNN",
+    "embedding": "Google News congelado",
+    "meta": false,
+    "celda": "LSTM",
+    "oculto": 128,
+    "dropout": 0.3,
+    "pesos_clase": false,
+    "atencion": "producto escalar",
+    "f1_val": 0.13269056859863052,
+    "f1_val_std": 0.0,
+    "mejor_epoca": 2.0,
+    "segundos": 1.9757602214813232
+   },
+   {
+    "tarea": "queue",
+    "modelo": "BiLSTM + atención · Google News congelado",
+    "arquitectura": "RNN",
+    "embedding": "Google News congelado",
+    "meta": false,
+    "celda": "LSTM",
+    "oculto": 64,
+    "dropout": 0.3,
+    "pesos_clase": false,
+    "atencion": "producto escalar",
+    "f1_val": 0.12601451365744576,
+    "f1_val_std": 0.0,
+    "mejor_epoca": 2.0,
+    "segundos": 2.1321330070495605
+   }
+  ]
+ },
+ "hp_deep": {
+  "CNN": {
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false
+  },
+  "RNN": {
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar"
+  }
+ },
+ "nombre_arq": {
+  "CNN": "CNN",
+  "RNN": "BiLSTM + atención"
+ },
+ "mejor_embedding": {
+  "CNN": "Google News fine-tuning",
+  "RNN": "Word2Vec propio fine-tuning"
+ },
+ "deep_log": [
+  {
+   "tarea": "queue",
+   "modelo": "CNN · Aleatorio",
+   "arquitectura": "CNN",
+   "embedding": "Aleatorio",
+   "meta": false,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.1656424030337074,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 0.875730037689209,
+   "f1_test": 0.16139070603312136,
+   "f1_test_std": 0.0,
+   "acc_test": 0.37780898876404495
+  },
+  {
+   "tarea": "queue",
+   "modelo": "CNN · Google News congelado",
+   "arquitectura": "CNN",
+   "embedding": "Google News congelado",
+   "meta": false,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.19174380362724325,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 0.5437595844268799,
+   "f1_test": 0.21716073974798933,
+   "f1_test_std": 0.0,
+   "acc_test": 0.4101123595505618
+  },
+  {
+   "tarea": "queue",
+   "modelo": "CNN · Google News fine-tuning",
+   "arquitectura": "CNN",
+   "embedding": "Google News fine-tuning",
+   "meta": false,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.2002401792763239,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 0.7443649768829346,
+   "f1_test": 0.22395537784263606,
+   "f1_test_std": 0.0,
+   "acc_test": 0.41292134831460675
+  },
+  {
+   "tarea": "queue",
+   "modelo": "CNN · Word2Vec propio congelado",
+   "arquitectura": "CNN",
+   "embedding": "Word2Vec propio congelado",
+   "meta": false,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.16407566225973755,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 1.0,
+   "segundos": 0.5847222805023193,
+   "f1_test": 0.1793453278747396,
+   "f1_test_std": 0.0,
+   "acc_test": 0.3890449438202247
+  },
+  {
+   "tarea": "queue",
+   "modelo": "CNN · Word2Vec propio fine-tuning",
+   "arquitectura": "CNN",
+   "embedding": "Word2Vec propio fine-tuning",
+   "meta": false,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.1833356134566567,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 0.7133204936981201,
+   "f1_test": 0.17569657547486472,
+   "f1_test_std": 0.0,
+   "acc_test": 0.38764044943820225
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM + atención · Aleatorio",
+   "arquitectura": "RNN",
+   "embedding": "Aleatorio",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.11055903575743058,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 1.8741207122802734,
+   "f1_test": 0.11583029161270067,
+   "f1_test_std": 0.0,
+   "acc_test": 0.3693820224719101
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM + atención · Google News congelado",
+   "arquitectura": "RNN",
+   "embedding": "Google News congelado",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.13269056859863052,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 1.7515852451324463,
+   "f1_test": 0.14682648220250485,
+   "f1_test_std": 0.0,
+   "acc_test": 0.37219101123595505
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM + atención · Google News fine-tuning",
+   "arquitectura": "RNN",
+   "embedding": "Google News fine-tuning",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.13304362328447966,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 2.380488157272339,
+   "f1_test": 0.14111736277079362,
+   "f1_test_std": 0.0,
+   "acc_test": 0.3693820224719101
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM + atención · Word2Vec propio congelado",
+   "arquitectura": "RNN",
+   "embedding": "Word2Vec propio congelado",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.1377903339398292,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 2.0025107860565186,
+   "f1_test": 0.14808811246742307,
+   "f1_test_std": 0.0,
+   "acc_test": 0.3862359550561798
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM + atención · Word2Vec propio fine-tuning",
+   "arquitectura": "RNN",
+   "embedding": "Word2Vec propio fine-tuning",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.14295392155879635,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 1.9736227989196777,
+   "f1_test": 0.15399946421313232,
+   "f1_test_std": 0.0,
+   "acc_test": 0.38764044943820225
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM sin atención · Word2Vec propio fine-tuning",
+   "arquitectura": "RNN",
+   "embedding": "Word2Vec propio fine-tuning",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "no",
+   "f1_val": 0.1634174377408646,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 1.8625071048736572,
+   "f1_test": 0.1680513151637574,
+   "f1_test_std": 0.0,
+   "acc_test": 0.3806179775280899
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM + atención general · Word2Vec propio fine-tuning",
+   "arquitectura": "RNN",
+   "embedding": "Word2Vec propio fine-tuning",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "general",
+   "f1_val": 0.1586872918222507,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 1.0,
+   "segundos": 2.367997169494629,
+   "f1_test": 0.1710630647386122,
+   "f1_test_std": 0.0,
+   "acc_test": 0.38202247191011235
+  },
+  {
+   "tarea": "queue",
+   "modelo": "CNN + meta-features · Google News fine-tuning",
+   "arquitectura": "CNN",
+   "embedding": "Google News fine-tuning",
+   "meta": true,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.1959905916153085,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 0.7805871963500977,
+   "f1_test": 0.21807922148101794,
+   "f1_test_std": 0.0,
+   "acc_test": 0.4143258426966292
+  },
+  {
+   "tarea": "queue",
+   "modelo": "BiLSTM + atención + meta-features · Word2Vec propio fine-tuning",
+   "arquitectura": "RNN",
+   "embedding": "Word2Vec propio fine-tuning",
+   "meta": true,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.12972532867698353,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 2.247035503387451,
+   "f1_test": 0.15074308727241056,
+   "f1_test_std": 0.0,
+   "acc_test": 0.3862359550561798
+  },
+  {
+   "tarea": "priority",
+   "modelo": "CNN · Google News fine-tuning",
+   "arquitectura": "CNN",
+   "embedding": "Google News fine-tuning",
+   "meta": false,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.329999482912996,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 0.8985886573791504,
+   "f1_test": 0.35376702214346456,
+   "f1_test_std": 0.0,
+   "acc_test": 0.49719101123595505
+  },
+  {
+   "tarea": "priority",
+   "modelo": "BiLSTM + atención · Word2Vec propio fine-tuning",
+   "arquitectura": "RNN",
+   "embedding": "Word2Vec propio fine-tuning",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.326904624832086,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 1.8690502643585205,
+   "f1_test": 0.3444436886950812,
+   "f1_test_std": 0.0,
+   "acc_test": 0.4747191011235955
+  },
+  {
+   "tarea": "type",
+   "modelo": "CNN · Google News fine-tuning",
+   "arquitectura": "CNN",
+   "embedding": "Google News fine-tuning",
+   "meta": false,
+   "n_filtros": 100,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "f1_val": 0.6724423124531904,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 0.8690929412841797,
+   "f1_test": 0.6884173608560623,
+   "f1_test_std": 0.0,
+   "acc_test": 0.7893258426966292
+  },
+  {
+   "tarea": "type",
+   "modelo": "BiLSTM + atención · Word2Vec propio fine-tuning",
+   "arquitectura": "RNN",
+   "embedding": "Word2Vec propio fine-tuning",
+   "meta": false,
+   "celda": "LSTM",
+   "oculto": 128,
+   "dropout": 0.3,
+   "pesos_clase": false,
+   "atencion": "producto escalar",
+   "f1_val": 0.6547648406459342,
+   "f1_val_std": 0.0,
+   "mejor_epoca": 2.0,
+   "segundos": 1.8234212398529053,
+   "f1_test": 0.6455209422572347,
+   "f1_test_std": 0.0,
+   "acc_test": 0.7710674157303371
+  }
+ ],
+ "resultados": [
+  {
+   "tarea": "queue",
+   "familia": "Baseline",
+   "modelo": "Clase mayoritaria",
+   "detalle": "",
+   "semillas": 1,
+   "f1_val": 0.044201312910284465,
+   "accuracy": 0.3146067415730337,
+   "precision": 0.03146067415730337,
+   "recall": 0.1,
+   "f1": 0.04786324786324787,
+   "f1_ponderado": 0.1505810045135888,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + Naive Bayes",
+   "detalle": "uni+bigramas, sin stopwords; variante=multinomial, alpha=0.01",
+   "semillas": 1,
+   "f1_val": 0.30169172688204265,
+   "accuracy": 0.42275280898876405,
+   "precision": 0.47145962878877257,
+   "recall": 0.3121296086080035,
+   "f1": 0.34274709314071516,
+   "f1_ponderado": 0.4053406333425966,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + Regresión logística",
+   "detalle": "uni+bigramas, sin stopwords; C=1.0, class_weight=balanced",
+   "semillas": 1,
+   "f1_val": 0.2940859338729006,
+   "accuracy": 0.3693820224719101,
+   "precision": 0.3280426338175933,
+   "recall": 0.3341190283240833,
+   "f1": 0.3203681944496955,
+   "f1_ponderado": 0.377381154947843,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + SVM lineal",
+   "detalle": "uni+bigramas, sin stopwords; C=0.03, class_weight=balanced",
+   "semillas": 1,
+   "f1_val": 0.2610850960187295,
+   "accuracy": 0.37359550561797755,
+   "precision": 0.28978800742988176,
+   "recall": 0.3367853772015323,
+   "f1": 0.28207786868216894,
+   "f1_ponderado": 0.35561074274094273,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Shallow",
+   "modelo": "Solo meta-features + Regresión logística",
+   "detalle": "12 features de forma, sin texto",
+   "semillas": 1,
+   "f1_val": 0.07542708304687742,
+   "accuracy": 0.09691011235955056,
+   "precision": 0.10527326754704891,
+   "recall": 0.1271783541002608,
+   "f1": 0.07850622630701455,
+   "f1_ponderado": 0.10172627634530916,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + meta-features + Regresión logística",
+   "detalle": "uni+bigramas, sin stopwords; w=0.03",
+   "semillas": 1,
+   "f1_val": 0.29682533803092304,
+   "accuracy": 0.3707865168539326,
+   "precision": 0.30662877796693006,
+   "recall": 0.33293893906349864,
+   "f1": 0.30982325605422883,
+   "f1_ponderado": 0.3756402184806015,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "CNN · Aleatorio",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.1656424030337074,
+   "accuracy": 0.37780898876404495,
+   "precision": 0.2725090553423521,
+   "recall": 0.1785676417902584,
+   "f1": 0.16139070603312136,
+   "f1_ponderado": 0.27824946407786677,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "CNN · Google News congelado",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.19174380362724325,
+   "accuracy": 0.4101123595505618,
+   "precision": 0.26336093932590166,
+   "recall": 0.22113086457153397,
+   "f1": 0.21716073974798933,
+   "f1_ponderado": 0.33732066111585574,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "CNN · Google News fine-tuning",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.2002401792763239,
+   "accuracy": 0.41292134831460675,
+   "precision": 0.2518211411318072,
+   "recall": 0.23027722531018674,
+   "f1": 0.22395537784263606,
+   "f1_ponderado": 0.34295198210351335,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "CNN · Word2Vec propio congelado",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 1",
+   "semillas": 1,
+   "f1_val": 0.16407566225973755,
+   "accuracy": 0.3890449438202247,
+   "precision": 0.1743898744331856,
+   "recall": 0.2013029984721161,
+   "f1": 0.1793453278747396,
+   "f1_ponderado": 0.3171786721026642,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "CNN · Word2Vec propio fine-tuning",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.1833356134566567,
+   "accuracy": 0.38764044943820225,
+   "precision": 0.282406126044244,
+   "recall": 0.20159523919285585,
+   "f1": 0.17569657547486472,
+   "f1_ponderado": 0.30069345766710076,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención · Aleatorio",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.11055903575743058,
+   "accuracy": 0.3693820224719101,
+   "precision": 0.09593973800878654,
+   "recall": 0.16553571428571429,
+   "f1": 0.11583029161270067,
+   "f1_ponderado": 0.22215064973093068,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención · Google News congelado",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.13269056859863052,
+   "accuracy": 0.37219101123595505,
+   "precision": 0.23661851079954527,
+   "recall": 0.17242694805194805,
+   "f1": 0.14682648220250485,
+   "f1_ponderado": 0.26860066071136207,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención · Google News fine-tuning",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.13304362328447966,
+   "accuracy": 0.3693820224719101,
+   "precision": 0.13673406047707723,
+   "recall": 0.1681355042016807,
+   "f1": 0.14111736277079362,
+   "f1_ponderado": 0.26750053445124017,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención · Word2Vec propio congelado",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.1377903339398292,
+   "accuracy": 0.3862359550561798,
+   "precision": 0.16494145781049224,
+   "recall": 0.17510695187165776,
+   "f1": 0.14808811246742307,
+   "f1_ponderado": 0.27488781135628476,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención · Word2Vec propio fine-tuning",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.14295392155879635,
+   "accuracy": 0.38764044943820225,
+   "precision": 0.17498069276019584,
+   "recall": 0.17826537433155082,
+   "f1": 0.15399946421313232,
+   "f1_ponderado": 0.2851048344541056,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM sin atención · Word2Vec propio fine-tuning",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=no; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.1634174377408646,
+   "accuracy": 0.3806179775280899,
+   "precision": 0.17366217250907154,
+   "recall": 0.183170359052712,
+   "f1": 0.1680513151637574,
+   "f1_ponderado": 0.30566228805714024,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención general · Word2Vec propio fine-tuning",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=general; mejor época ≈ 1",
+   "semillas": 1,
+   "f1_val": 0.1586872918222507,
+   "accuracy": 0.38202247191011235,
+   "precision": 0.16265536091676755,
+   "recall": 0.19820425897631777,
+   "f1": 0.1710630647386122,
+   "f1_ponderado": 0.3087720130340432,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "CNN + meta-features · Google News fine-tuning",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.1959905916153085,
+   "accuracy": 0.4143258426966292,
+   "precision": 0.2608702894536916,
+   "recall": 0.22523323279154922,
+   "f1": 0.21807922148101794,
+   "f1_ponderado": 0.33988047854084863,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "queue",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención + meta-features · Word2Vec propio fine-tuning",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.12972532867698353,
+   "accuracy": 0.3862359550561798,
+   "precision": 0.1933964340744002,
+   "recall": 0.1761979564553094,
+   "f1": 0.15074308727241056,
+   "f1_ponderado": 0.27683114676947573,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "priority",
+   "familia": "Baseline",
+   "modelo": "Clase mayoritaria",
+   "detalle": "",
+   "semillas": 1,
+   "f1_val": 0.193419740777667,
+   "accuracy": 0.425561797752809,
+   "precision": 0.14185393258426968,
+   "recall": 0.3333333333333333,
+   "f1": 0.19901477832512315,
+   "f1_ponderado": 0.25407926053024854,
+   "recall_high": 0.0,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0,
+   "recall_high_std": 0.0
+  },
+  {
+   "tarea": "priority",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + Naive Bayes",
+   "detalle": "uni+bigramas, sin stopwords; variante=multinomial, alpha=0.01",
+   "semillas": 1,
+   "f1_val": 0.4548455342303157,
+   "accuracy": 0.4859550561797753,
+   "precision": 0.46146621575331803,
+   "recall": 0.4294382753673373,
+   "f1": 0.42560450851302994,
+   "f1_ponderado": 0.46713073900840824,
+   "recall_high": 0.5393258426966292,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0,
+   "recall_high_std": 0.0
+  },
+  {
+   "tarea": "priority",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + Regresión logística",
+   "detalle": "uni+bigramas; C=1.0, class_weight=balanced",
+   "semillas": 1,
+   "f1_val": 0.45906527985871354,
+   "accuracy": 0.449438202247191,
+   "precision": 0.42536168693503695,
+   "recall": 0.42539725566163195,
+   "f1": 0.42530696954007546,
+   "f1_ponderado": 0.44900934669044,
+   "recall_high": 0.49812734082397003,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0,
+   "recall_high_std": 0.0
+  },
+  {
+   "tarea": "priority",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + SVM lineal",
+   "detalle": "uni+bigramas, sin stopwords; C=0.03, class_weight=balanced",
+   "semillas": 1,
+   "f1_val": 0.40019331938346264,
+   "accuracy": 0.48314606741573035,
+   "precision": 0.4412031819965108,
+   "recall": 0.4065394828769156,
+   "f1": 0.37890697490011743,
+   "f1_ponderado": 0.4414435572562308,
+   "recall_high": 0.5205992509363296,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0,
+   "recall_high_std": 0.0
+  },
+  {
+   "tarea": "priority",
+   "familia": "Deep",
+   "modelo": "CNN · Google News fine-tuning",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.329999482912996,
+   "accuracy": 0.49719101123595505,
+   "precision": 0.3446476895146097,
+   "recall": 0.4047168761820002,
+   "f1": 0.35376702214346456,
+   "f1_ponderado": 0.42860553859886463,
+   "recall_high": 0.3857677902621723,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0,
+   "recall_high_std": 0.0
+  },
+  {
+   "tarea": "priority",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención · Word2Vec propio fine-tuning",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.326904624832086,
+   "accuracy": 0.4747191011235955,
+   "precision": 0.31560672514619886,
+   "recall": 0.38963671648063686,
+   "f1": 0.3444436886950812,
+   "f1_ponderado": 0.4165438715477432,
+   "recall_high": 0.449438202247191,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0,
+   "recall_high_std": 0.0
+  },
+  {
+   "tarea": "type",
+   "familia": "Baseline",
+   "modelo": "Clase mayoritaria",
+   "detalle": "",
+   "semillas": 1,
+   "f1_val": 0.14682539682539683,
+   "accuracy": 0.425561797752809,
+   "precision": 0.10639044943820225,
+   "recall": 0.25,
+   "f1": 0.14926108374384237,
+   "f1_ponderado": 0.25407926053024854,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "type",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + Naive Bayes",
+   "detalle": "uni+bigramas; variante=multinomial, alpha=0.05",
+   "semillas": 1,
+   "f1_val": 0.7761399128966119,
+   "accuracy": 0.8174157303370787,
+   "precision": 0.8226007181988709,
+   "recall": 0.7895622842335385,
+   "f1": 0.795941639804206,
+   "f1_ponderado": 0.8015602901318728,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "type",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + Regresión logística",
+   "detalle": "uni+bigramas; C=1.0, class_weight=balanced",
+   "semillas": 1,
+   "f1_val": 0.8011092727786975,
+   "accuracy": 0.7780898876404494,
+   "precision": 0.7863716297819558,
+   "recall": 0.7905342884032649,
+   "f1": 0.7881094615361618,
+   "f1_ponderado": 0.7798496308487083,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "type",
+   "familia": "Shallow",
+   "modelo": "TF-IDF + SVM lineal",
+   "detalle": "unigramas; C=0.03, class_weight=balanced",
+   "semillas": 1,
+   "f1_val": 0.7586718705649754,
+   "accuracy": 0.7935393258426966,
+   "precision": 0.7753534362038306,
+   "recall": 0.7545010255501254,
+   "f1": 0.7479424445166242,
+   "f1_ponderado": 0.7646040874885985,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "type",
+   "familia": "Deep",
+   "modelo": "CNN · Google News fine-tuning",
+   "detalle": "n_filtros=100, dropout=0.3, pesos_clase=False; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.6724423124531904,
+   "accuracy": 0.7893258426966292,
+   "precision": 0.7711613685878391,
+   "recall": 0.7187273155064867,
+   "f1": 0.6884173608560623,
+   "f1_ponderado": 0.723832279820758,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  },
+  {
+   "tarea": "type",
+   "familia": "Deep",
+   "modelo": "BiLSTM + atención · Word2Vec propio fine-tuning",
+   "detalle": "celda=LSTM, oculto=128, dropout=0.3, pesos_clase=False, atencion=producto escalar; mejor época ≈ 2",
+   "semillas": 1,
+   "f1_val": 0.6547648406459342,
+   "accuracy": 0.7710674157303371,
+   "precision": 0.6010597306738428,
+   "recall": 0.7173121723937099,
+   "f1": 0.6455209422572347,
+   "f1_ponderado": 0.6947210721604186,
+   "accuracy_std": 0.0,
+   "precision_std": 0.0,
+   "recall_std": 0.0,
+   "f1_std": 0.0,
+   "f1_ponderado_std": 0.0
+  }
+ ],
+ "mejor_modelo_cola": "TF-IDF + Naive Bayes",
+ "informe_clases": [
+  {
+   "clase": "Billing and Payments",
+   "precision": 0.7313432835820896,
+   "recall": 0.7,
+   "f1-score": 0.7153284671532847,
+   "support": 70.0
+  },
+  {
+   "clase": "Customer Service",
+   "precision": 0.25384615384615383,
+   "recall": 0.375,
+   "f1-score": 0.30275229357798167,
+   "support": 88.0
+  },
+  {
+   "clase": "General Inquiry",
+   "precision": 1.0,
+   "recall": 0.18181818181818182,
+   "f1-score": 0.3076923076923077,
+   "support": 11.0
+  },
+  {
+   "clase": "Human Resources",
+   "precision": 0.2,
+   "recall": 0.09090909090909091,
+   "f1-score": 0.125,
+   "support": 11.0
+  },
+  {
+   "clase": "IT Support",
+   "precision": 0.3157894736842105,
+   "recall": 0.13636363636363635,
+   "f1-score": 0.19047619047619047,
+   "support": 88.0
+  },
+  {
+   "clase": "Product Support",
+   "precision": 0.35964912280701755,
+   "recall": 0.3014705882352941,
+   "f1-score": 0.328,
+   "support": 136.0
+  },
+  {
+   "clase": "Returns and Exchanges",
+   "precision": 0.5,
+   "recall": 0.21052631578947367,
+   "f1-score": 0.2962962962962963,
+   "support": 38.0
+  },
+  {
+   "clase": "Sales and Pre-Sales",
+   "precision": 0.3,
+   "recall": 0.17647058823529413,
+   "f1-score": 0.2222222222222222,
+   "support": 17.0
+  },
+  {
+   "clase": "Service Outages and Maintenance",
+   "precision": 0.6,
+   "recall": 0.3103448275862069,
+   "f1-score": 0.4090909090909091,
+   "support": 29.0
+  },
+  {
+   "clase": "Technical Support",
+   "precision": 0.45396825396825397,
+   "recall": 0.6383928571428571,
+   "f1-score": 0.5306122448979592,
+   "support": 224.0
+  },
+  {
+   "clase": "accuracy",
+   "precision": 0.42275280898876405,
+   "recall": 0.42275280898876405,
+   "f1-score": 0.42275280898876405,
+   "support": 0.42275280898876405
+  },
+  {
+   "clase": "macro avg",
+   "precision": 0.47145962878877257,
+   "recall": 0.3121296086080035,
+   "f1-score": 0.34274709314071516,
+   "support": 712.0
+  },
+  {
+   "clase": "weighted avg",
+   "precision": 0.43065047003379436,
+   "recall": 0.42275280898876405,
+   "f1-score": 0.4053406333425966,
+   "support": 712.0
+  }
+ ],
+ "confusiones": [
+  {
+   "real": "Product Support",
+   "predicha": "Technical Support",
+   "tickets": 51
+  },
+  {
+   "real": "IT Support",
+   "predicha": "Technical Support",
+   "tickets": 50
+  },
+  {
+   "real": "Technical Support",
+   "predicha": "Product Support",
+   "tickets": 35
+  },
+  {
+   "real": "Product Support",
+   "predicha": "Customer Service",
+   "tickets": 31
+  },
+  {
+   "real": "Technical Support",
+   "predicha": "Customer Service",
+   "tickets": 30
+  },
+  {
+   "real": "Customer Service",
+   "predicha": "Technical Support",
+   "tickets": 27
+  },
+  {
+   "real": "Returns and Exchanges",
+   "predicha": "Technical Support",
+   "tickets": 13
+  },
+  {
+   "real": "IT Support",
+   "predicha": "Customer Service",
+   "tickets": 12
+  }
+ ],
+ "atencion_tabla": [
+  {
+   "variante": "BiLSTM sin atención",
+   "accuracy": 0.3806179775280899,
+   "f1": 0.1680513151637574,
+   "f1_std": 0.0,
+   "atención en primer y último token": null,
+   "peso del token más atendido": null
+  },
+  {
+   "variante": "BiLSTM + atención",
+   "accuracy": 0.38764044943820225,
+   "f1": 0.15399946421313232,
+   "f1_std": 0.0,
+   "atención en primer y último token": 0.035884931683540344,
+   "peso del token más atendido": 0.25196173787117004
+  },
+  {
+   "variante": "BiLSTM + atención general",
+   "accuracy": 0.38202247191011235,
+   "f1": 0.1710630647386122,
+   "f1_std": 0.0,
+   "atención en primer y último token": 0.02698635496199131,
+   "peso del token más atendido": 0.5095096826553345
+  }
+ ],
+ "atencion_top": [
+  {
+   "cola": "Billing and Payments",
+   "atención producto escalar": "billing, invoices, charges, payment, pricing, quickbooks",
+   "atención general": "billing, pricing, payment, quickbooks, fees, product"
+  },
+  {
+   "cola": "Customer Service",
+   "atención producto escalar": "digital, analytics, am, about, healthcare, provide",
+   "atención general": "audience, different, content, options, sincerely, target"
+  },
+  {
+   "cola": "General Inquiry",
+   "atención producto escalar": "",
+   "atención general": ""
+  },
+  {
+   "cola": "Human Resources",
+   "atención producto escalar": "",
+   "atención general": ""
+  },
+  {
+   "cola": "IT Support",
+   "atención producto escalar": "",
+   "atención general": ""
+  },
+  {
+   "cola": "Product Support",
+   "atención producto escalar": "adjusting, social, brand, spend, despite, project",
+   "atención general": "ad, content, adjusting, configuration, targeting, user"
+  },
+  {
+   "cola": "Returns and Exchanges",
+   "atención producto escalar": "",
+   "atención general": ""
+  },
+  {
+   "cola": "Sales and Pre-Sales",
+   "atención producto escalar": "",
+   "atención general": ""
+  },
+  {
+   "cola": "Service Outages and Maintenance",
+   "atención producto escalar": "",
+   "atención general": ""
+  },
+  {
+   "cola": "Technical Support",
+   "atención producto escalar": "restarting, clearing, tried, connections, restart, caches",
+   "atención general": "restart, restarting, rebooting, restarted, clearing, reboot"
+  }
+ ],
+ "atencion_ejemplo": {
+  "texto": "possible security breach revealing patient information online attempted to update the antivirus software and reviewed network logs . already performed checks .",
+  "cola": "Technical Support",
+  "tokens": 22
+ },
+ "meta_features": [
+  "n_tokens",
+  "n_caracteres",
+  "n_oraciones",
+  "long_media_palabra",
+  "tiene_asunto",
+  "n_tokens_asunto",
+  "n_interrogaciones",
+  "n_exclamaciones",
+  "n_cifras",
+  "n_marcadores",
+  "ratio_mayusculas",
+  "n_saltos_linea"
+ ],
+ "semillas": [
+  42
+ ],
+ "max_epocas": 2,
+ "paciencia": 5,
+ "lr": 0.001,
+ "tam_lote": 64,
+ "fast": true
+}
