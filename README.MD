@@ -50,7 +50,9 @@ Al analizar el texto para entrenar modelos supervisados se detectó que dos de l
 
 ### Informe en PDF
 
-El informe de la entrega es [`informe/E3_Gestion_de_Tickets.pdf`](informe/E3_Gestion_de_Tickets.pdf), elaborado a partir de `artifacts/resultados.json` y `artifacts/figuras/`.
+El informe de la entrega es [`informe/E3_Gestion_de_Tickets.pdf`](informe/E3_Gestion_de_Tickets.pdf), elaborado a partir de `artifacts/resultados.json` y `artifacts/figuras/` con el mismo formato que el informe de la E2.
+
+La guía de estudio [`informe/Guia_E3_para_entenderla.pdf`](informe/Guia_E3_para_entenderla.pdf) no forma parte de la entrega.
 
 ---
 
@@ -121,6 +123,7 @@ artifacts/
   resultados.csv  resultados.json  emb_google_news_*.npz  figuras/
 informe/
   E3_Gestion_de_Tickets.pdf     # Informe de la entrega
+  Guia_E3_para_entenderla.pdf   # Guía de estudio (no se entrega)
 ```
 
 ## Actualizar dependencias
