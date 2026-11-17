@@ -51,7 +51,17 @@ Al analizar el texto para entrenar modelos supervisados se detectó que dos de l
 - `artifacts/figuras/*.png`: 7 gráficas listas para la memoria.
 - `artifacts/emb_google_news_*.npz`: caché de vectores de Google News filtrados al vocabulario.
 
-> **Nota:** los resultados guardados actualmente en `artifacts/` corresponden a una ejecución rápida de validación (`E3_FAST=1`, 1 semilla y 2 épocas). Ejecutar el notebook completo con `E3_FAST=0` (~45 min en GPU) para obtener las métricas finales con 3 semillas y hasta 40 épocas.
+> **Nota:** los resultados de `artifacts/` y las salidas guardadas en `src/Entrega_3_NLP.ipynb` corresponden a la ejecución completa (3 semillas y hasta 60 épocas por red; unas dos horas con una GPU NVIDIA RTX 3050). Con `E3_FAST=1` se hace una pasada rápida de prueba (20 % de los datos, 1 semilla y 2 épocas) en unos 2 minutos, pero sobrescribe `artifacts/`.
+
+### Informe en PDF
+
+El informe de la entrega es [`informe/E3_Gestion_de_Tickets.pdf`](informe/E3_Gestion_de_Tickets.pdf). Se genera a partir de `artifacts/resultados.json` y `artifacts/figuras/` con:
+
+```powershell
+python informe/generar_informe.py
+```
+
+El script construye `informe/E3_informe.html` y lo imprime a PDF con Microsoft Edge en modo *headless*. Las cifras salen del JSON; los textos interpretativos están en `informe/textos_informe.py`.
 
 ---
 
@@ -124,6 +134,10 @@ data/tickets/
   raw/  dataprocessed/  features/  embeddings/  export/
 artifacts/
   resultados.csv  resultados.json  emb_google_news_*.npz  figuras/
+informe/
+  generar_informe.py            # Construye el informe de E3 (HTML -> PDF con Edge headless)
+  textos_informe.py             # Textos interpretativos del informe
+  E3_Gestion_de_Tickets.pdf     # Informe de la entrega
 ```
 
 ## Actualizar dependencias
