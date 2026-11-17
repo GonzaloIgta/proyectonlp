@@ -61,7 +61,9 @@ El informe de la entrega es [`informe/E3_Gestion_de_Tickets.pdf`](informe/E3_Ges
 python informe/generar_informe.py
 ```
 
-El script construye `informe/E3_informe.html` y lo imprime a PDF con Microsoft Edge en modo *headless*. Las cifras salen del JSON; los textos interpretativos están en `informe/textos_informe.py`.
+El script construye `informe/E3_informe.html` y lo imprime a PDF con Microsoft Edge en modo *headless*, con el mismo formato que el informe de la E2. Las cifras salen del JSON; la redacción está en el propio script.
+
+La guía de estudio (`informe/Guia_E3_para_entenderla.pdf`, no forma parte de la entrega) se genera igual con `python informe/generar_guia.py`.
 
 ---
 
@@ -136,8 +138,9 @@ artifacts/
   resultados.csv  resultados.json  emb_google_news_*.npz  figuras/
 informe/
   generar_informe.py            # Construye el informe de E3 (HTML -> PDF con Edge headless)
-  textos_informe.py             # Textos interpretativos del informe
   E3_Gestion_de_Tickets.pdf     # Informe de la entrega
+  generar_guia.py               # Construye la guía de estudio de la E3
+  Guia_E3_para_entenderla.pdf   # Guía de estudio (no se entrega)
 ```
 
 ## Actualizar dependencias

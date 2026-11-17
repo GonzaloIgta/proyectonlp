@@ -548,7 +548,7 @@ resultados en <i>artifacts/</i>, de donde sale el informe.</div></div>
         ["<code>src/e3_parte3_deep_evaluacion.py</code>", "Apartados 5.3-8: redes, entrenamiento, búsqueda, comparación, atención, prioridad y tipo, tabla final y conclusiones"],
         ["<code>src/build_notebook.py</code>", "Junta los tres scripts en <code>src/Entrega_3_NLP.ipynb</code>"],
         ["<code>artifacts/</code>", "<code>resultados.json</code> y <code>.csv</code> con todas las métricas, las 7 figuras y la caché de Google News"],
-        ["<code>informe/generar_informe.py</code>", "Construye el informe PDF a partir de <code>artifacts/</code>; la redacción está en <code>textos_informe.py</code>"]])}
+        ["<code>informe/generar_informe.py</code>", "Construye el informe PDF de la entrega a partir de <code>artifacts/</code>, con el mismo formato que el de la E2"]])}
 <h3>Cómo se ejecuta</h3>
 <ul>
 <li>Hace falta PyTorch con GPU. En este PC está en el entorno <code>C:\\Users\\Usuario\\.venvs\\nlp-e3</code>
