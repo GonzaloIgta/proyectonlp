@@ -16,17 +16,12 @@ pip install -r requirements.txt
 
 - **E2:** abrir `src/tickets_pipeline.ipynb` y ejecutar todas las celdas en orden (con `src/` como directorio de trabajo).
 - **E3:** abrir [`src/Entrega_3_NLP.ipynb`](src/Entrega_3_NLP.ipynb) y ejecutar todas las celdas en orden (funciona tanto desde `src/` como desde la raíz). Para una prueba rápida con el 20 % de los datos, 1 semilla y 2 épocas, definir `E3_FAST=1`.
-- Para regenerar `src/Entrega_3_NLP.ipynb` tras editar los scripts `src/e3_parte*.py`:
-
-```powershell
-python src/build_notebook.py
-```
 
 ---
 
 ## Entrega 3 (E3) · Primera iteración de modelado
 
-Todo el código de E3 está en [`src/Entrega_3_NLP.ipynb`](src/Entrega_3_NLP.ipynb), generado con [`src/build_notebook.py`](src/build_notebook.py) a partir de los módulos `src/e3_parte1_datos_shallow.py`, `src/e3_parte2_embeddings.py` y `src/e3_parte3_deep_evaluacion.py`.
+Todo el código y la explicación de E3 están en [`src/Entrega_3_NLP.ipynb`](src/Entrega_3_NLP.ipynb).
 
 ### Continuidad con E2 y corrección de fuga de datos
 
@@ -116,10 +111,6 @@ Salida en `data/tickets/export/` (`tickets_processed.jsonl`, `manifest.json`) y 
 src/
   tickets_pipeline.ipynb        # E2: limpieza, tokenización, TF-IDF, embeddings y exportación
   Entrega_3_NLP.ipynb           # E3: shallow learning, CNN/BiRNN con atención y evaluación
-  e3_parte1_datos_shallow.py    # E3 bloque 0-4 (datos, deduplicación, métricas, shallow + meta)
-  e3_parte2_embeddings.py       # E3 bloque 5.1-5.2 (secuencias y matrices de embeddings)
-  e3_parte3_deep_evaluacion.py  # E3 bloque 5.3-7 (CNN, BiRNN, atención, prioridad/tipo, análisis)
-  build_notebook.py             # Genera src/Entrega_3_NLP.ipynb desde los scripts e3_parte*.py
 data/tickets/
   raw/  dataprocessed/  features/  embeddings/  export/
 artifacts/
