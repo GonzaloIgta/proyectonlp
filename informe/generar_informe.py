@@ -1,16 +1,15 @@
-"""Genera el informe en PDF de la Entrega 3 a partir de artifacts/resultados.json y artifacts/figuras.
+"""Genera el informe en PDF de la Entrega 3 con el mismo formato que el de la E2.
 
 Uso (desde la raíz del proyecto):
     python informe/generar_informe.py
 
-Construye un HTML (informe/E3_informe.html) y lo imprime a PDF con Microsoft Edge en modo headless.
-Todas las cifras salen del JSON que guarda el notebook, así que basta con volver a ejecutar este
-script tras reejecutar el notebook.
+Lee artifacts/resultados.json y artifacts/figuras/, construye informe/E3_informe.html y lo imprime a
+PDF con Microsoft Edge en modo headless. Las cifras salen del JSON; si se reejecuta el notebook y
+cambia el sentido de algún resultado, hay que revisar la redacción de este fichero.
 """
 import html
 import json
 import subprocess
-import sys
 import tempfile
 from datetime import date
 from pathlib import Path
@@ -31,7 +30,6 @@ FECHA = f"{HOY.day} de {MESES[HOY.month - 1]} de {HOY.year}"
 
 # ----------------------------------------------------------------------------- utilidades
 def n(x, d=3):
-    """Número con coma decimal, como en las entregas anteriores."""
     return "–" if x is None else f"{x:.{d}f}".replace(".", ",")
 
 
@@ -47,480 +45,491 @@ def e(s):
     return html.escape(str(s))
 
 
-def tabla(cabecera, filas, clases=None, num_desde=1, resaltar=None):
-    """Tabla HTML. `num_desde`: a partir de qué columna se alinea a la derecha. `resaltar`: índices de fila en negrita."""
-    resaltar = set(resaltar or [])
-    th = "".join(f'<th class="{"n" if i >= num_desde else ""}">{c}</th>' for i, c in enumerate(cabecera))
+def tabla(cab, filas, num=(), negrita=(), clase=""):
+    """Tabla como las de E2: cabecera gris centrada, números a la derecha."""
+    th = "".join(f"<th>{c}</th>" for c in cab)
     trs = []
     for k, f in enumerate(filas):
-        tds = "".join(f'<td class="{"n" if i >= num_desde else ""}">{c}</td>' for i, c in enumerate(f))
-        trs.append(f'<tr class="{"best" if k in resaltar else ""}">{tds}</tr>')
-    return f'<table class="{clases or ""}"><thead><tr>{th}</tr></thead><tbody>{"".join(trs)}</tbody></table>'
+        tds = "".join(f'<td class="{"n" if i in num else ""}">{c}</td>' for i, c in enumerate(f))
+        trs.append(f'<tr class="{"b" if k in negrita else ""}">{tds}</tr>')
+    return f'<table class="{clase}"><thead><tr>{th}</tr></thead><tbody>{"".join(trs)}</tbody></table>'
+
+
+def lista(items):
+    return "<ul>" + "".join(f"<li>{i}</li>" for i in items) + "</ul>"
 
 
 def figura(nombre, pie, ancho="100%"):
-    ruta = (FIG / f"{nombre}.png").as_uri()
-    return f'<figure><img src="{ruta}" style="width:{ancho}"><figcaption>{pie}</figcaption></figure>'
+    return (f'<figure><img src="{(FIG / f"{nombre}.png").as_uri()}" style="width:{ancho}">'
+            f'<figcaption>{pie}</figcaption></figure>')
 
 
-def res(tarea, modelo=None, familia=None):
-    filas = [r for r in R["resultados"] if r["tarea"] == tarea]
-    if modelo is not None:
-        filas = [r for r in filas if r["modelo"] == modelo]
-    if familia is not None:
-        filas = [r for r in filas if r["familia"] == familia]
-    return filas
+def h1(texto, intro):
+    return f'<div class="sec"><h1>{texto}</h1><p class="intro">{intro}</p></div>'
 
 
-def mejor(tarea, familia=None, por="f1"):
-    return max(res(tarea, familia=familia), key=lambda r: r[por])
+def res(tarea, modelo):
+    return next(r for r in R["resultados"] if r["tarea"] == tarea and r["modelo"] == modelo)
 
 
-def f1_con_std(r):
+def mejor(tarea, cond=lambda r: True, por="f1"):
+    return max((r for r in R["resultados"] if r["tarea"] == tarea and cond(r)), key=lambda r: r[por])
+
+
+def deep(modelo, tarea="queue"):
+    return next(d for d in R["deep_log"] if d["tarea"] == tarea and d["modelo"] == modelo)
+
+
+def f1s(r):
     return n(r["f1"]) + (f' <span class="std">± {n(r["f1_std"])}</span>' if r.get("semillas", 1) > 1 else "")
 
 
-def tabla_resultados(tarea, extra_high=False, filas=None):
-    filas = sorted(filas if filas is not None else res(tarea), key=lambda r: -r["f1"])
-    cab = ["Familia", "Modelo", "Accuracy", "Precision", "Recall", "F1 macro", "F1 pond."]
-    if extra_high:
-        cab.append("Recall <i>high</i>")
-    cuerpo = []
-    for r in filas:
-        f = [e(r["familia"]), e(r["modelo"]), n(r["accuracy"]), n(r["precision"]), n(r["recall"]),
-             f1_con_std(r), n(r["f1_ponderado"])]
-        if extra_high:
-            f.append(n(r.get("recall_high")))
-        cuerpo.append(f)
-    return tabla(cab, cuerpo, clases="res", num_desde=2, resaltar=[0])
+def tabla_res(tarea, filas=None, high=False):
+    filas = sorted(filas if filas is not None else [r for r in R["resultados"] if r["tarea"] == tarea],
+                   key=lambda r: -r["f1"])
+    cab = ["Familia", "Modelo", "Accuracy", "Precision", "Recall", "F1 macro", "F1 pond."] + (["Recall high"] if high else [])
+    cuerpo = [[e(r["familia"]), e(r["modelo"]), n(r["accuracy"]), n(r["precision"]), n(r["recall"]), f1s(r),
+               n(r["f1_ponderado"])] + ([n(r.get("recall_high"))] if high else []) for r in filas]
+    return tabla(cab, cuerpo, num=tuple(range(2, len(cab))), negrita=(0,), clase="res")
 
 
-# ----------------------------------------------------------------------------- datos derivados
-P = R["particiones"]
-FUGA = R["fuga"]
-HP = R["hp_deep"]
-NA = R["nombre_arq"]
-ME = R["mejor_embedding"]
+# ----------------------------------------------------------------------------- cifras
+P, FUGA, NA, ME, HP = R["particiones"], R["fuga"], R["nombre_arq"], R["mejor_embedding"], R["hp_deep"]
+MS = R["mejor_shallow"]
 COB = {c["embedding"]: c for c in R["cobertura"]}
-DEEP_Q = [d for d in R["deep_log"] if d["tarea"] == "queue"]
+SVM, LR, NB = res("queue", "TF-IDF + SVM lineal"), res("queue", "TF-IDF + Regresión logística"), res("queue", "TF-IDF + Naive Bayes")
+BASE = mejor("queue", lambda r: r["familia"] == "Baseline")
+META_SOLA = res("queue", "Solo meta-features + Regresión logística")
+META_MAS = mejor("queue", lambda r: r["modelo"].startswith("TF-IDF + meta-features"))
+RNN = NA["RNN"].split()[0]                      # BiGRU o BiLSTM
 EMBS = ["Aleatorio", "Google News congelado", "Google News fine-tuning", "Word2Vec propio congelado",
         "Word2Vec propio fine-tuning"]
+C = {emb: deep(f"{NA['CNN']} · {emb}") for emb in EMBS}
+Rn = {emb: deep(f"{NA['RNN']} · {emb}") for emb in EMBS}
+CNN_Q = mejor("queue", lambda r: r["modelo"].startswith("CNN") and "meta" not in r["modelo"])
+RNN_Q = mejor("queue", lambda r: r["modelo"].startswith("Bi") and "meta" not in r["modelo"])
+G = R["grid_shallow_queue"]
 
 
-def deep(arq, emb, meta=False, tarea="queue"):
-    nombre = f"{NA[arq]}{' + meta-features' if meta else ''} · {emb}"
-    return next((d for d in R["deep_log"] if d["tarea"] == tarea and d["modelo"] == nombre), None)
+def mejor_grid(**filtro):
+    return max(x["f1_val"] for x in G if all(x.get(k) == v for k, v in filtro.items()))
 
 
-BEST_Q = mejor("queue")
-BEST_Q_SH = mejor("queue", "Shallow")
-BEST_Q_DEEP = mejor("queue", "Deep")
-BASE_Q = res("queue", familia="Baseline")[0]
-MS = R["mejor_shallow"]
+AT = {a["variante"]: a for a in R["atencion_tabla"]}
+AT_DOT = next(a for k, a in AT.items() if k.endswith("+ atención"))
+AT_GEN = next(a for k, a in AT.items() if "general" in k)
+CL = {c["clase"]: c for c in R["informe_clases"]}
+COLAS = [c for c in CL if c not in ("accuracy", "macro avg", "weighted avg")]
+BQ = R["busqueda_deep"]
 
-# ----------------------------------------------------------------------------- textos interpretativos
-# Se rellenan a mano tras leer los resultados definitivos (ver sección "Conclusiones").
-from textos_informe import TEXTOS  # noqa: E402  (fichero hermano con la redacción de cada apartado)
-
-T = TEXTOS(R, n=n, pct=pct, miles=miles)
-
-# ----------------------------------------------------------------------------- HTML
+# ----------------------------------------------------------------------------- CSS (formato de la E2)
 CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@600;700&display=block');
-:root { --azul: #2347b5; --tinta: #1d1d1f; --tinta2: #4a4a4f; --linea: #c8c8cc; --cab: #d9d9d9; }
-@page { size: A4; margin: 20mm 19mm 20mm 19mm;
-        @bottom-right { content: counter(page); font: 9pt 'Inter', 'Segoe UI', sans-serif; color: #77777c; } }
-@page portada { margin: 0; @bottom-right { content: none; } }
-* { box-sizing: border-box; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Montserrat:wght@700&display=block');
+@page { size: A4; margin: 25.4mm; }
+@page portada { margin: 0; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 10pt; line-height: 1.5; color: var(--tinta); margin: 0; }
-.portada { page: portada; height: 297mm; width: 210mm; position: relative; break-after: page; }
-.portada img.logo { position: absolute; top: 14mm; left: 50%; transform: translateX(-50%); width: 58mm; }
-.portada .titulo { position: absolute; top: 112mm; width: 100%; text-align: center; }
-.portada h1 { font-family: 'Montserrat', 'Segoe UI', sans-serif; font-weight: 700; font-size: 34pt; margin: 0; color: #13182a; }
-.portada .sub { margin-top: 5mm; font-size: 13pt; color: var(--tinta2); }
-.portada .sub2 { margin-top: 2mm; font-size: 10.5pt; color: #77777c; }
-.portada .pie { position: absolute; left: 25mm; bottom: 26mm; }
-.portada .pie h3 { font-family: 'Montserrat', 'Segoe UI', sans-serif; color: var(--azul); font-size: 15pt; margin: 7mm 0 2mm; }
-.portada .pie p { margin: 0 0 3mm; font-size: 11pt; color: var(--tinta2); }
-h2 { font-family: 'Montserrat', 'Segoe UI', sans-serif; color: var(--azul); font-size: 17pt; margin: 0 0 3mm; line-height: 1.25;
-     break-after: avoid; }
-h2.nueva { break-before: page; }
-h3 { font-family: 'Inter', 'Segoe UI', sans-serif; font-weight: 600; color: var(--azul); font-size: 12pt; margin: 6mm 0 2mm;
-     break-after: avoid; }
-p { margin: 0 0 2.6mm; text-align: left; }
-ul, ol { margin: 0 0 2.6mm; padding-left: 6mm; }
-li { margin-bottom: 1mm; }
-code { font-family: Consolas, monospace; font-size: 8.8pt; background: #f1f1f3; padding: 0 1mm; border-radius: 1mm; }
-table { border-collapse: collapse; width: auto; min-width: 55%; margin: 2mm 0 4mm; font-size: 8.8pt; break-inside: avoid; }
-table.res, table.ancha { width: 100%; }
-table.emb td:first-child { white-space: nowrap; }
-th, td { border: 0.6pt solid #8a8a8f; padding: 1.4mm 2mm; vertical-align: top; text-align: left; }
-th { background: var(--cab); font-weight: 600; }
-td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-tr.best td { font-weight: 600; }
-.std { color: #77777c; font-weight: 400; font-size: 8pt; }
-table.res td:nth-child(2) { width: 38%; }
-figure { margin: 3mm 0 5mm; text-align: center; break-inside: avoid; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; line-height: 1.32; color: #000; margin: 0; }
+.portada { page: portada; width: 210mm; height: 297mm; position: relative; break-after: page; }
+.portada .logo { position: absolute; top: 2mm; left: 50%; transform: translateX(-50%); width: 60mm; }
+.portada h1.t { position: absolute; top: 127mm; width: 100%; text-align: center; margin: 0;
+                font: 700 32pt 'Montserrat', sans-serif; color: #0f172a; }
+.portada .pie { position: absolute; left: 25.4mm; top: 206mm; }
+.portada .pie h3 { font: 700 14pt 'Montserrat', sans-serif; color: #1e40af; margin: 0 0 3.5mm; }
+.portada .pie p { font: 12pt 'Inter', sans-serif; color: #334155; margin: 0 0 6.5mm; }
+.portada .pie h3.f { margin-top: 3mm; }
+h1 { font: 700 16pt/1.25 'Montserrat', sans-serif; color: #1e40af; margin: 9mm 0 1.5mm; }
+h1.res { font-size: 14pt; margin-top: 0; }
+.sec { break-inside: avoid; }
+p.intro { font: 12pt/1.35 'Inter', sans-serif; color: #334155; margin: 0 0 4mm; }
+h2 { font: 700 14pt/1.25 Arial, Helvetica, sans-serif; color: #1e40af; margin: 6mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.4mm; }
+ul { list-style: none; margin: 0 0 2.4mm; padding-left: 12.5mm; }
+ul li { position: relative; margin-bottom: 0.4mm; }
+ul li::before { content: "-"; position: absolute; left: -6.5mm; }
+ol { margin: 0 0 2.4mm; padding-left: 9mm; }
+ol li { margin-bottom: 0.8mm; }
+code { font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; }
+table { border-collapse: collapse; width: 100%; margin: 3mm 0 4mm; font-size: 10pt; line-height: 1.25; break-inside: avoid; }
+th, td { border: 0.75pt solid #000; padding: 1.6mm 2mm; vertical-align: top; text-align: left; }
+th { background: #cccccc; color: #000; font-weight: 400; vertical-align: middle; }
+td.n { text-align: right; white-space: nowrap; }
+tr.b td { font-weight: 700; }
+.std { color: #555; font-weight: 400; font-size: 8.5pt; }
+table.res td:nth-child(2) { width: 36%; }
+figure { margin: 3mm 0 4mm; text-align: center; break-inside: avoid; }
 figure img { max-width: 100%; }
-figcaption { font-size: 8.6pt; color: var(--tinta2); margin-top: 1.5mm; text-align: center; }
-.nota { border-left: 1mm solid var(--azul); background: #f3f5fc; padding: 2.4mm 3.5mm; margin: 3mm 0 4mm; break-inside: avoid; }
-.nota p:last-child { margin-bottom: 0; }
-.formula { text-align: center; font-family: 'Cambria Math', 'Cambria', serif; font-size: 11pt; margin: 2mm 0 3mm; }
-.kpis { display: flex; gap: 4mm; margin: 3mm 0 5mm; break-inside: avoid; }
-.kpi { flex: 1; border: 0.6pt solid var(--linea); border-radius: 2mm; padding: 3mm 3.5mm; }
-.kpi .v { font-family: 'Montserrat', 'Segoe UI', sans-serif; font-size: 18pt; font-weight: 700; color: var(--tinta); line-height: 1.1; }
-.kpi .l { font-size: 8.4pt; color: var(--tinta2); margin-top: 1mm; }
+figcaption { font-size: 9pt; color: #334155; margin-top: 1mm; }
 .bloque { break-inside: avoid; }
-.refs li { font-size: 8.5pt; margin-bottom: 0.8mm; }
+.refs ul { font-size: 9pt; line-height: 1.22; }
+.refs li { margin-bottom: 0; }
 """
 
-secciones = []
+S = []
 
-# Portada
-secciones.append(f"""
-<section class="portada">
-  <img class="logo" src="{(INF / 'deusto.png').as_uri()}">
-  <div class="titulo">
-    <h1>Gestión de Tickets</h1>
-    <div class="sub">E3 · Primera iteración de resolución del problema</div>
-    <div class="sub2">Fundamentos del Procesamiento de Lenguaje Natural</div>
-  </div>
-  <div class="pie">
-    <h3>AUTORES</h3><p>David Trueba</p><p>Gonzalo Iglesias</p>
-    <h3>FECHA</h3><p>{FECHA}</p>
-  </div>
+# ----------------------------------------------------------------------------- portada
+S.append(f"""<section class="portada">
+<img class="logo" src="{(INF / 'deusto.png').as_uri()}">
+<h1 class="t">Gestión de Tickets</h1>
+<div class="pie"><h3>AUTORES</h3><p>David Trueba</p><p>Gonzalo Iglesias</p><h3 class="f">FECHA</h3><p>{FECHA}</p></div>
 </section>""")
 
-# Resumen
-resumen_codigo = tabla(
-    ["Apartado del notebook", "Qué hace"],
-    [["0. Configuración", "Semillas, rutas, estilo de las gráficas y modo rápido de prueba (<code>E3_FAST=1</code>)"],
-     ["1. Carga y limpieza", "Lee el CSV bruto de E2, aplica sus filtros y <b>elimina los tickets duplicados</b>"],
-     ["2. Preprocesado y partición", "Tokenización de E2 y nueva partición train / validación / test (70 / 15 / 15)"],
-     ["3. Métricas", "Accuracy, precision, recall y F1 (macro y ponderado); recall de la prioridad <i>high</i>"],
-     ["4. Shallow learning", "TF-IDF + Naive Bayes, Regresión logística y SVM lineal con búsqueda en rejilla; meta-features"],
-     ["5. Deep learning", "CNN (Kim, 2014) y RNN bidireccional con atención; 5 variantes de embeddings; análisis de la atención"],
-     ["6. Prioridad y tipo", "Las otras dos salidas planteadas en E1"],
-     ["7. Comparativa y errores", "Tabla final, matriz de confusión y confusiones más frecuentes"],
-     ["8. Conclusiones", "Resumen de resultados y siguientes pasos"]],
-    clases="ancha", num_desde=99)
+# ----------------------------------------------------------------------------- resumen de apartados
+S.append(f"""<h1 class="res">Resumen apartados del código</h1>
+<p>El código está en <code>src/Entrega_3_NLP.ipynb</code> y se divide en 9 apartados:</p>
+{tabla(["Apartado", "Qué hace"], [
+    ["0. Configuración", "Semillas, rutas, estilo de las gráficas y modo rápido de prueba (<code>E3_FAST=1</code>)"],
+    ["1. Carga y limpieza", "Carga el CSV bruto de E2, aplica sus filtros y elimina los tickets duplicados"],
+    ["2. Preprocesado y partición", "Tokenización de E2 y partición train / validación / test (70 / 15 / 15)"],
+    ["3. Métricas", "Accuracy, precision, recall y F1 (macro y ponderado); recall de la prioridad <i>high</i>"],
+    ["4. Shallow learning", "TF-IDF + Naive Bayes, Regresión logística y SVM lineal con búsqueda en rejilla; meta-features"],
+    ["5. Deep learning", "Vocabulario, embeddings, CNN y RNN bidireccional con atención; comparación de embeddings"],
+    ["6. Prioridad y tipo", "Las otras dos salidas que planteamos en E1"],
+    ["7. Tabla comparativa y errores", "Tabla final, matriz de confusión y confusiones más frecuentes"],
+    ["8. Conclusiones", "Resumen de resultados y siguientes pasos"]])}
+<p>El notebook se genera con <code>src/build_notebook.py</code> a partir de tres scripts
+(<code>src/e3_parte1_datos_shallow.py</code>, <code>e3_parte2_embeddings.py</code> y <code>e3_parte3_deep_evaluacion.py</code>).
+La ejecución completa tarda unos 96 minutos con una GPU NVIDIA RTX 3050 y guarda las métricas en
+<code>artifacts/resultados.json</code> y las figuras en <code>artifacts/figuras/</code>.</p>""")
 
-secciones.append(f"""
-<h2>Resumen de la entrega</h2>
-<p>En E1 planteamos un sistema que, a partir del asunto y el cuerpo de un ticket de soporte, prediga el
-departamento al que va (<b>cola</b>, 10 clases), su <b>prioridad</b> (3 niveles) y su <b>tipo</b> (4 clases).
-En E2 preparamos el texto (tokenización, vocabulario, TF-IDF y Word2Vec). En esta entrega entrenamos y
-comparamos los primeros modelos: tres clasificadores clásicos sobre TF-IDF y dos redes neuronales (una CNN y
-una RNN bidireccional con atención) con cinco formas distintas de inicializar los embeddings.</p>
-<div class="kpis">
-  <div class="kpi"><div class="v">{miles(R['tickets_unicos'])}</div><div class="l">tickets únicos tras quitar {miles(R['tickets_e2'] - R['tickets_unicos'])} duplicados</div></div>
-  <div class="kpi"><div class="v">{len(R['resultados'])}</div><div class="l">modelos evaluados en test (3 tareas)</div></div>
-  <div class="kpi"><div class="v">{n(BEST_Q['f1'])}</div><div class="l">mejor F1 macro en la cola · {e(BEST_Q['modelo'])}</div></div>
-  <div class="kpi"><div class="v">{n(BASE_Q['f1'])}</div><div class="l">F1 macro de la clase mayoritaria (referencia)</div></div>
-</div>
-{T['resumen']}
-<h3>Estructura del código</h3>
-<p>Todo el código está en <code>src/Entrega_3_NLP.ipynb</code>, que se genera con <code>src/build_notebook.py</code>
-a partir de tres scripts (<code>src/e3_parte1_datos_shallow.py</code>, <code>e3_parte2_embeddings.py</code> y
-<code>e3_parte3_deep_evaluacion.py</code>). El notebook se ejecuta de principio a fin en unas dos horas con una
-GPU NVIDIA RTX 3050 y guarda las métricas en <code>artifacts/resultados.json</code> y las figuras en
-<code>artifacts/figuras/</code>, que son las que usa este informe.</p>
-{resumen_codigo}
-""")
-
-# 1. Datos
-fuga_tabla = tabla(["Partición", "Tickets", "Test con gemelo en train", "Accuracy", "F1 macro"],
-                   [[e(f["partición"]), miles(f["tickets"]), e(f["test con gemelo en train"]).replace(".", ","),
-                     n(f["accuracy"]), n(f["f1 macro"])] for f in FUGA])
-part_tabla = tabla(["Conjunto", "Uso", "Tickets"],
-                   [["train", "Ajusta los modelos, el vocabulario, el TF-IDF, el escalador y el Word2Vec propio", miles(P["train"])],
-                    ["validación", "Elige hiperparámetros y decide cuándo parar de entrenar (<i>early stopping</i>)", miles(P["val"])],
-                    ["test", "Solo se usa una vez, para las tablas finales", miles(P["test"])]], clases="ancha", num_desde=2)
-secciones.append(f"""
-<h2 class="nueva">1. Datos: continuidad con E2 y una fuga que corregir</h2>
-<p>Partimos del mismo dataset que en E1 y E2, <code>Tobi-Bueck/customer-support-tickets</code>, y de los mismos
-filtros: se quitan los tickets en alemán y los de cuerpo vacío, lo que deja {miles(R['tickets_e2'])} tickets en
-inglés. La entrada de los modelos es el asunto más el cuerpo; la respuesta del agente no se usa para clasificar,
-porque no existe cuando llega el ticket.</p>
-<h3>1.1 Tickets duplicados entre los ficheros</h3>
-<p>Al preparar los modelos supervisados descubrimos algo que no vimos en E2: dos de los tres CSV del dataset son
-versiones distintas del mismo conjunto y comparten <b>{miles(R['tickets_e2'] - R['tickets_unicos'])} tickets idénticos</b>
-(con las mismas etiquetas). Si un ticket cae en train y su gemelo en test, el modelo no necesita generalizar: le basta
-con haberlo memorizado. Es una fuga de información que infla las métricas. Lo medimos con el mismo clasificador
-(TF-IDF + SVM lineal) sobre la partición 80/20 de E2 y sobre los datos sin duplicados:</p>
-{fuga_tabla}
-<p>Con duplicados, uno de cada cuatro tickets de test ya estaba en train y la accuracy sube
-{n(100 * (FUGA[0]['accuracy'] - FUGA[1]['accuracy']), 1)} puntos sin que el modelo sea mejor. Por eso
-<b>en E3 trabajamos solo con los {miles(R['tickets_unicos'])} tickets únicos</b> y recalculamos el TF-IDF, el
-vocabulario y el Word2Vec propio sobre el nuevo train, en lugar de reutilizar las matrices guardadas en E2.</p>
-<h3>1.2 Partición train / validación / test</h3>
-<p>En E2 solo había train y test. Ahora hace falta un tercer conjunto, validación, porque vamos a elegir
-hiperparámetros y a decidir cuándo parar de entrenar las redes: si esas decisiones se tomaran mirando test, test
-dejaría de ser una estimación honesta. Seguimos el esquema de la Unidad 3 (70 / 15 / 15, estratificado por cola):</p>
-{part_tabla}
-<h3>1.3 Etiquetas y métricas</h3>
-{figura('01_distribucion_clases', 'Figura 1. Distribución de las tres etiquetas en los tickets únicos.', '80%')}
+# ----------------------------------------------------------------------------- 1. datos
+S.append(h1("1. Datos, partición y métricas",
+            "Esta sección cubre de dónde salen los datos de entrenamiento: los filtros de E2, un problema de duplicados "
+            "que encontramos al entrenar, la nueva partición con validación y las métricas que usamos."))
+S.append(f"""<h2>1.1 Datos de partida</h2>
+<p>Usamos el mismo dataset de E1 y E2 (<code>Tobi-Bueck/customer-support-tickets</code>) y los mismos filtros: quitamos
+los tickets en alemán y los de cuerpo vacío, lo que deja {miles(R['tickets_e2'])} tickets en inglés. El texto de
+entrada es el asunto + el cuerpo. Como en E2, la respuesta del agente (<code>answer</code>) no se usa para clasificar,
+porque no existe en el momento de clasificar; solo se usa como texto extra para entrenar nuestro Word2Vec.</p>
+<p>Queremos predecir las tres salidas de E1: <b>queue</b> (cola o departamento, 10 clases), <b>priority</b> (3 niveles)
+y <b>type</b> (4 clases). La tarea principal es la cola.</p>
+<h2>1.2 Duplicados entre ficheros</h2>
+<p>Al entrenar los primeros modelos vimos que dos de los tres CSV del dataset son versiones distintas del mismo conjunto
+y comparten <b>{miles(R['tickets_e2'] - R['tickets_unicos'])} tickets idénticos</b>, con las mismas etiquetas. Si un
+ticket está en train y su gemelo en test, el modelo no tiene que generalizar: le basta con haberlo memorizado. Es una
+fuga de información que no vimos en E2. Lo medimos con el mismo modelo (TF-IDF + SVM lineal) sobre la partición 80/20
+de E2 y sobre los datos sin duplicados:</p>
+{tabla(["Partición", "Tickets", "Test con gemelo en train", "Accuracy", "F1 macro"],
+       [[e(f["partición"]), miles(f["tickets"]), e(f["test con gemelo en train"]).replace(".", ","), n(f["accuracy"]),
+         n(f["f1 macro"])] for f in FUGA], num=(1, 2, 3, 4))}
+<p><b>Decisión.</b> Con duplicados, uno de cada cuatro tickets de test ya estaba en train y la accuracy sube
+{n(100 * (FUGA[0]['accuracy'] - FUGA[1]['accuracy']), 1)} puntos sin que el modelo sea mejor. Trabajamos con los
+<b>{miles(R['tickets_unicos'])} tickets únicos</b> y recalculamos el TF-IDF, el vocabulario y el Word2Vec propio sobre el
+nuevo train, en vez de reutilizar las matrices guardadas en E2.</p>
+<h2>1.3 Partición train / validación / test</h2>
+<p>En E2 solo había train y test. Ahora necesitamos un conjunto de <b>validación</b> para elegir hiperparámetros y decidir
+cuándo parar de entrenar las redes; si lo hiciéramos mirando test, test dejaría de ser una estimación honesta. Seguimos
+el esquema de la Unidad 3 (70 / 15 / 15), estratificado por cola y con <code>random_state=42</code>:</p>
+{tabla(["Conjunto", "Tickets", "Para qué se usa"],
+       [["train", miles(P["train"]), "Ajustar los modelos, el vocabulario, el TF-IDF, el escalador y el Word2Vec propio"],
+        ["validación", miles(P["val"]), "Elegir hiperparámetros y parar de entrenar (<i>early stopping</i>)"],
+        ["test", miles(P["test"]), "Solo para las tablas finales"]], num=(1,))}
+<h2>1.4 Métricas</h2>
 <p>La cola está muy desbalanceada: <i>Technical Support</i> tiene unas veinte veces más tickets que <i>General
-Inquiry</i>. Por eso la métrica que decide qué modelo es mejor es el <b>F1 macro</b>, que da el mismo peso a cada
-clase. Damos las cuatro métricas del enunciado (accuracy, y precision, recall y F1 promediadas por clase) más el F1
-ponderado como referencia. En la prioridad medimos además el <b>recall de la clase <i>high</i></b>, la crítica según
-E1: un ticket urgente clasificado como no urgente es el error más caro.</p>
+Inquiry</i>. Un modelo que siempre responde la cola más frecuente saca accuracy {n(BASE['accuracy'])} pero F1 macro
+{n(BASE['f1'])}. Por eso la métrica que decide qué modelo es mejor es el <b>F1 macro</b>, que da el mismo peso a cada
+clase. Para cada modelo damos:</p>
+{lista(["<b>Accuracy</b>: porcentaje de aciertos.",
+        "<b>Precision, recall y F1</b> calculados por clase y promediados (macro).",
+        "<b>F1 ponderado</b> por el tamaño de cada clase, como referencia.",
+        "En la prioridad, el <b>recall de la clase <i>high</i></b>, la crítica según E1: un ticket urgente clasificado como no urgente es el error más caro."])}
 """)
 
-# 2. Shallow
+# ----------------------------------------------------------------------------- 2. shallow
 tf = R["tfidf_features"]
-tf_tabla = tabla(["Configuración del TF-IDF", "Features"], [[e(k), miles(v)] for k, v in tf.items()])
-grid_tabla = tabla(["Modelo", "Hiperparámetro", "Valores probados"],
-                   [["todos", "TF-IDF", "unigramas / uni+bigramas, con o sin stopwords"],
-                    ["Naive Bayes", "variante", "Multinomial, Complement"],
-                    ["Naive Bayes", "<code>alpha</code> (suavizado)", "0,0003 · 0,001 · 0,003 · 0,01 · 0,03 · 0,1 · 0,3 · 1"],
-                    ["Regresión logística", "<code>C</code> (inversa de la regularización)", "1 · 10 · 100 · 1000"],
-                    ["SVM lineal", "<code>C</code>", "0,1 · 0,3 · 1 · 3 · 10 · 30 · 100"],
-                    ["Regresión logística y SVM", "<code>class_weight</code>", "ninguno, <code>balanced</code>"]],
-                   clases="ancha", num_desde=99)
+svm_uni = mejor_grid(modelo="SVM lineal", tfidf="unigramas")
+svm_bi = mejor_grid(modelo="SVM lineal", tfidf="uni+bigramas")
+svm_bi_sw = mejor_grid(modelo="SVM lineal", tfidf="uni+bigramas, sin stopwords")
+lr_bal = mejor_grid(modelo="Regresión logística", class_weight="balanced")
+lr_nobal = max(x["f1_val"] for x in G if x["modelo"] == "Regresión logística" and x["class_weight"] is None)
 
 
-def params_txt(p):
-    return ", ".join(f"{k} = {('ninguno' if v is None else str(v).replace('.', ','))}" for k, v in p.items())
+def params(p):
+    return ", ".join(f"{k} = {'ninguno' if v is None else str(v).replace('.', ',')}" for k, v in p.items())
 
 
-mejores_sh = tabla(["Modelo", "Mejor combinación", "F1 macro (validación)"],
-                   [[e(k), f"{e(v['tfidf'])}; {e(params_txt(v['params']))}", n(v["f1_val"])] for k, v in MS["queue"].items()],
-                   num_desde=2)
-filas_sh = [r for r in res("queue") if r["familia"] in ("Shallow", "Baseline")]
-meta_lista = ", ".join(f"<code>{m}</code>" for m in R["meta_features"])
-secciones.append(f"""
-<h2 class="nueva">2. Shallow learning con representación dispersa</h2>
-<p><b>TF-IDF</b> convierte cada ticket en un vector tan largo como el vocabulario, casi todo ceros (por eso es una
-representación <i>dispersa</i>): el peso de una palabra sube si aparece mucho en el ticket y baja si aparece en casi
-todos. No tiene en cuenta el orden de las palabras salvo el que capturan los bigramas. Igual que en E2, el
-vectorizador se ajusta solo con train.</p>
-{tf_tabla}
-<p>Sobre esos vectores entrenamos los tres clasificadores clásicos vistos en clase (Unidad 3):</p>
-<ul>
-<li><b>Naive Bayes</b>: aplica Bayes suponiendo que las palabras son independientes dada la clase. Es el baseline
-clásico de texto, muy rápido. Probamos la variante <i>Multinomial</i> y la <i>Complement</i>, pensada para clases
-desbalanceadas.</li>
-<li><b>Regresión logística</b>: aprende un peso por palabra y clase y da probabilidades con softmax.</li>
-<li><b>SVM lineal</b>: busca el hiperplano que separa las clases con el mayor margen; suele ser el mejor modelo
-lineal en espacios dispersos de muchas dimensiones.</li>
-</ul>
-<p>Como referencia mínima incluimos un clasificador trivial que siempre responde la clase más frecuente.</p>
-<h3>2.1 Optimización de hiperparámetros</h3>
-<p>Hacemos una <b>búsqueda en rejilla</b>: se entrena cada combinación con train y se mide su F1 macro en
-validación; gana la que más saca y test no interviene. Los rangos de <code>C</code> y <code>alpha</code> se
-ampliaron dos veces, porque en las primeras pruebas el mejor valor caía en el extremo de la rejilla: si el óptimo
-está en el borde, no sabemos si seguiría mejorando. Con los rangos finales, los tres óptimos quedan en el interior.</p>
-{grid_tabla}
-{mejores_sh}
-{figura('02_grid_shallow', 'Figura 2. F1 macro en validación según la regularización C y la configuración del TF-IDF (para cada C, el mejor <i>class_weight</i>).')}
-{T['grid_shallow']}
-<h3>2.2 Combinar el texto con features no textuales</h3>
-<p>El enunciado valora combinar distintos tipos de features. El dataset solo trae texto y etiquetas, así que
-calculamos {len(R['meta_features'])} <b>meta-features de forma</b>, que describen cómo está escrito el ticket y no
-qué palabras usa: {meta_lista}. Los conteos se pasan a escala logarítmica y se estandarizan con la media y la
-desviación de train. No usamos como entrada <code>type</code>, <code>priority</code> ni los <code>tag_*</code>:
-son etiquetas que pone el agente después de leer el ticket y usarlas sería otra fuga.</p>
-<p>Para combinarlas con el TF-IDF se concatenan a su vector, multiplicadas por un peso <code>w</code> que también se
-elige en validación (el TF-IDF está normalizado y las meta-features no).</p>
-<h3>2.3 Resultados en test</h3>
-{tabla_resultados('queue', filas=filas_sh)}
-{T['shallow']}
-""")
+S.append(h1("2. Shallow learning con representación dispersa",
+            "Primera familia de modelos: los clasificadores clásicos de la Unidad 3 sobre la representación TF-IDF que "
+            "preparamos en E2."))
+S.append(f"""<h2>2.1 Representación TF-IDF</h2>
+<p>Igual que en E2, cada ticket se representa con TF-IDF ajustado solo con train. Probamos cuatro configuraciones, que
+entran en la búsqueda de hiperparámetros:</p>
+{tabla(["Configuración", "Features"], [[e(k), miles(v)] for k, v in tf.items()], num=(1,))}
+<h2>2.2 Modelos</h2>
+{lista(["<b>Naive Bayes</b>: aplica Bayes suponiendo que las palabras son independientes dada la clase. Probamos la "
+        "variante <i>Multinomial</i> y la <i>Complement</i>, pensada para clases desbalanceadas.",
+        "<b>Regresión logística</b>: aprende un peso por palabra y clase y da probabilidades con softmax.",
+        "<b>SVM lineal</b>: busca el hiperplano que separa las clases con el mayor margen.",
+        "<b>Clase mayoritaria</b>: siempre responde la cola más frecuente. Es la referencia mínima."])}
+<h2>2.3 Optimización de hiperparámetros</h2>
+<p>Hacemos una <b>búsqueda en rejilla</b>: se entrena cada combinación con train y se mide su F1 macro en validación; gana
+la que más saca y test no interviene. En total son {len(G)} combinaciones para la cola.</p>
+{tabla(["Modelo", "Hiperparámetro", "Valores probados"],
+       [["todos", "TF-IDF", "unigramas / uni+bigramas, con o sin stopwords"],
+        ["Naive Bayes", "variante", "Multinomial, Complement"],
+        ["Naive Bayes", "<code>alpha</code> (suavizado)", "0,0003 · 0,001 · 0,003 · 0,01 · 0,03 · 0,1 · 0,3 · 1"],
+        ["Regresión logística", "<code>C</code> (inversa de la regularización)", "1 · 10 · 100 · 1000"],
+        ["SVM lineal", "<code>C</code>", "0,1 · 0,3 · 1 · 3 · 10 · 30 · 100"],
+        ["Regresión logística y SVM", "<code>class_weight</code>", "ninguno, <code>balanced</code>"]])}
+<p>Los rangos de <code>C</code> y <code>alpha</code> se ampliaron dos veces, porque en las primeras pruebas el mejor valor
+caía en el extremo de la rejilla y no sabíamos si seguiría mejorando. Con los rangos finales, los tres óptimos quedan en
+el interior:</p>
+{tabla(["Modelo", "Mejor combinación", "F1 macro (validación)"],
+       [[e(k), f"{e(v['tfidf'])}; {e(params(v['params']))}", n(v["f1_val"])] for k, v in MS["queue"].items()], num=(2,))}
+<p><b>Qué sacamos de la búsqueda.</b> Las tres búsquedas eligen <b>unigramas + bigramas sin stopwords</b>. Los bigramas
+son lo que más aporta: en la SVM, el F1 de validación pasa de {n(svm_uni)} con solo unigramas a {n(svm_bi)} con
+bigramas. Hay expresiones que señalan el departamento mucho mejor que sus palabras por separado: todos los tickets con
+<i>billing discrepancy</i> son de <b>Billing and Payments</b> y el 89 % de los que dicen <i>service outage</i> van a
+<b>Service Outages and Maintenance</b>. Quitar stopwords ayuda un poco más ({n(svm_bi_sw)}). La regularización
+elegida es débil (C alto, alpha pequeño): conviene dejar que el modelo se ajuste mucho a train. Nuestra interpretación
+es que el dataset es sintético y repite plantillas de redacción. Ponderar las clases mejora la regresión logística
+({n(lr_nobal)} → {n(lr_bal)}).</p>
+<h2>2.4 Features no textuales</h2>
+<p>Para combinar distintos tipos de features calculamos {len(R['meta_features'])} <b>meta-features de forma</b>, que
+describen cómo está escrito el ticket y no qué palabras usa: longitud en tokens y caracteres, número de oraciones,
+longitud media de palabra, si tiene asunto, interrogaciones, exclamaciones, cifras, marcadores anonimizados, proporción
+de mayúsculas y saltos de línea. Los conteos se pasan a escala logarítmica y se estandarizan con train. No usamos
+<code>type</code>, <code>priority</code> ni los <code>tag_*</code>, porque los pone el agente después de leer el ticket.
+Se concatenan al vector TF-IDF multiplicadas por un peso <code>w</code> que también se elige en validación.</p>
+<h2>2.5 Resultados en test</h2>
+{tabla_res("queue", [r for r in R["resultados"] if r["tarea"] == "queue" and r["familia"] in ("Shallow", "Baseline")])}
+<p>La <b>SVM lineal</b> es el mejor modelo shallow (F1 macro {n(SVM['f1'])}), seguida de cerca por la regresión
+logística ({n(LR['f1'])}). Naive Bayes tiene la precision más alta ({n(NB['precision'])}) pero el recall más bajo
+({n(NB['recall'])}): cuando asigna una cola pequeña suele acertar, pero deja escapar muchos tickets de esas colas.</p>
+<p>Las <b>meta-features no aportan</b>: solas apenas superan a la clase mayoritaria (F1 macro {n(META_SOLA['f1'])}) y
+añadidas al TF-IDF dejan el F1 igual ({n(META_MAS['f1'])}), con el peso más pequeño probado. La longitud o la
+puntuación de un ticket no dicen a qué departamento va.</p>""")
 
-# 3. Deep
-cob_tabla = tabla(["Embedding", "Palabras del vocabulario con vector", "Tokens de test con vector"],
-                  [[e(k), pct(v["tipos del vocabulario con vector"]), pct(v["tokens de test con vector"])] for k, v in COB.items()])
-emb_tabla = tabla(["Variante", "Inicialización", "¿Se entrena?"],
-                  [["Aleatorio", "Vectores al azar, uniformes en [−0,25; 0,25]", "Sí, desde cero"],
-                   ["Google News congelado", "Word2Vec preentrenado con noticias (300 dim.)", "No"],
-                   ["Google News fine-tuning", "Word2Vec preentrenado con noticias (300 dim.)", "Sí"],
-                   ["Word2Vec propio congelado", "Skip-gram entrenado con tickets y respuestas de train", "No"],
-                   ["Word2Vec propio fine-tuning", "Skip-gram entrenado con tickets y respuestas de train", "Sí"]], num_desde=99)
-bq = R["busqueda_deep"]
-cnn_grid = tabla(["Filtros", "Dropout", "Pesos por clase", "F1 val.", "Mejor época"],
-                 [[b["n_filtros"], n(b["dropout"], 1), "sí" if b["pesos_clase"] else "no", n(b["f1_val"]), f"{b['mejor_epoca']:.0f}"]
-                  for b in bq["CNN"]], num_desde=0, resaltar=[0])
-rnn_grid = tabla(["Celda", "Estado oculto", "F1 val.", "Mejor época", "Tiempo (s)"],
-                 [[b["celda"], b["oculto"], n(b["f1_val"]), f"{b['mejor_epoca']:.0f}", f"{b['segundos']:.0f}"]
-                  for b in bq["RNN"]], num_desde=1, resaltar=[0])
-filas_emb = []
-for emb in EMBS:
-    fila = [e(emb)]
-    for arq in ("CNN", "RNN"):
-        d = deep(arq, emb)
-        fila += [n(d["f1_val"]), f'{n(d["f1_test"])} <span class="std">± {n(d["f1_test_std"])}</span>', f"{d['mejor_epoca']:.0f}"]
-    filas_emb.append(fila)
-emb_res = tabla(["Embedding", f"{NA['CNN']}: F1 val.", "F1 test", "Épocas",
-                 f"{e(NA['RNN'])}: F1 val.", "F1 test", "Épocas"], filas_emb, clases="ancha emb", num_desde=1)
-AT = R["atencion_tabla"]
-att_tabla = tabla(["Variante", "Accuracy", "F1 macro", "Peso en el primer y último token", "Peso del token más atendido"],
-                  [[e(a["variante"]), n(a["accuracy"]), f'{n(a["f1"])} <span class="std">± {n(a["f1_std"])}</span>',
-                    pct(a.get("atención en primer y último token")), pct(a.get("peso del token más atendido"))] for a in AT],
-                  clases="ancha")
-top_cols = [k for k in R["atencion_top"][0] if k != "cola"]
-att_top = tabla(["Cola"] + [e(c.capitalize()) for c in top_cols],
-                [[e(t["cola"])] + [e(t[c]) for c in top_cols] for t in R["atencion_top"]], clases="ancha", num_desde=99)
-filas_meta = [r for r in res("queue") if "meta-features" in r["modelo"]] + \
-             [r for r in res("queue") if r["modelo"] in (f"{NA[a]} · {ME[a]}" for a in ("CNN", "RNN"))] + \
-             [r for r in res("queue") if r["modelo"] == BEST_Q_SH["modelo"]]
-secciones.append(f"""
-<h2 class="nueva">3. Deep learning: CNN y RNN con atención</h2>
-<p>Los modelos anteriores tratan el ticket como una bolsa de palabras. Las redes de este apartado lo leen como una
-<b>secuencia</b>: cada token se sustituye por un vector denso de 300 dimensiones (<i>embedding</i>) y la red aprende
-a combinar esos vectores teniendo en cuenta el orden. Las implementamos en PyTorch.</p>
-<h3>3.1 Vocabulario y secuencias</h3>
-<p>Usamos la clase <code>Vocabulary</code> de E2 con dos tokens reservados, <code>&lt;PAD&gt;</code> (relleno, índice 0)
+# ----------------------------------------------------------------------------- 3. deep
+std_cnn = max(C[x]["f1_test_std"] for x in EMBS)
+cnn200 = [x["f1_val"] for x in BQ["CNN"] if x["n_filtros"] == 200]
+ep_max = max((x for arq in ("CNN", "RNN") for x in BQ[arq]), key=lambda x: x["mejor_epoca"])
+S.append(h1("3. Deep learning: CNN y RNN con atención",
+            "Segunda familia: redes que leen el ticket como una secuencia de embeddings. Comparamos cinco formas de "
+            "inicializar los embeddings en las dos arquitecturas vistas en la Unidad 3."))
+S.append(f"""<h2>3.1 Vocabulario y secuencias</h2>
+<p>Usamos la clase <code>Vocabulary</code> de E2 con dos tokens reservados: <code>&lt;PAD&gt;</code> (relleno, índice 0)
 y <code>&lt;UNK&gt;</code> (palabras desconocidas). Se construye solo con train y descarta las palabras que aparecen
-menos de dos veces, lo que deja {miles(R['vocabulario'])} tokens. Cada ticket pasa a ser una lista de índices
-recortada o rellenada hasta 200 tokens (el 99 % de los tickets tiene menos de 180). Como en la Unidad 3, el relleno se
-gestiona con <i>packed sequences</i> en la RNN y con una máscara en la atención, para que la red no lo procese.</p>
-<h3>3.2 Embeddings: tres orígenes, congelados o con fine-tuning</h3>
-<p>El enunciado pide comparar tipos de embeddings y el efecto del <i>fine-tuning</i>. Probamos cinco variantes:</p>
-{emb_tabla}
-<p><b>Congelado</b> significa que los vectores no cambian durante el entrenamiento y la red solo aprende a usarlos;
-con <b>fine-tuning</b> también se actualizan, así que pueden adaptarse a la tarea, a cambio de más parámetros y más
-riesgo de sobreajuste. El Word2Vec propio sigue el esquema de <code>w2v_all</code> de E2 (skip-gram, ventana 5,
-tickets y respuestas) pero reentrenado solo con el train sin duplicados. Para Google News mantenemos los
-<i>fallbacks</i> de E2 (mayúscula inicial, todo en mayúsculas y sin el posesivo <code>'s</code>); las palabras sin
-vector reciben uno aleatorio.</p>
-{cob_tabla}
-{T['cobertura']}
-<h3>3.3 Arquitecturas</h3>
-<p><b>CNN para texto (Kim, 2014).</b> Es la arquitectura de la Unidad 3. Filtros de convolución de anchura 3, 4 y 5
-recorren el ticket y cada uno se activa cuando ve un patrón de 3, 4 o 5 palabras seguidas (un n-grama aprendido). De
-cada filtro se toma solo su activación máxima (<i>max-over-time pooling</i>): importa si el patrón aparece, no dónde.
-Las activaciones se concatenan y pasan por una capa densa con dropout y softmax. En el artículo original nuestras
-variantes se llaman <i>CNN-rand</i>, <i>CNN-static</i> y <i>CNN-non-static</i>.</p>
-<p><b>RNN bidireccional (LSTM o GRU).</b> La red lee el ticket palabra a palabra manteniendo una memoria y, al ser
-bidireccional, otra lo lee de derecha a izquierda, de modo que cada palabra queda representada con su contexto por
-ambos lados. LSTM y GRU usan puertas para decidir qué recordar y qué olvidar, lo que evita el desvanecimiento del
-gradiente de la RNN básica. Según la regla vista en clase la GRU suele ir mejor con pocos datos, así que el tipo de
-celda es un hiperparámetro más.</p>
-<p><b>Atención.</b> Sin atención, todo el ticket se resume en el último estado oculto, que hace de cuello de botella.
-Con atención la red vuelve a mirar todos los estados. Seguimos el cálculo de la Unidad 3, con una adaptación: al
-clasificar no hay decoder, así que el «estado actual» <i>q</i> es el estado final de la RNN (sus dos direcciones
-concatenadas).</p>
+menos de dos veces, lo que deja {miles(R['vocabulario'])} tokens. Cada ticket pasa a ser una lista de índices recortada o
+rellenada hasta 200 tokens (el 99 % tiene menos de 180).</p>
+<h2>3.2 Embeddings</h2>
+<p>El enunciado pide comparar tipos de embeddings y el efecto del fine-tuning. Probamos cinco variantes de 300 dimensiones:</p>
+{tabla(["Variante", "Inicialización", "¿Se entrena?"],
+       [["Aleatorio", "Vectores al azar, uniformes en [−0,25; 0,25]", "Sí, desde cero"],
+        ["Google News congelado", "Word2Vec preentrenado de E2", "No"],
+        ["Google News fine-tuning", "Word2Vec preentrenado de E2", "Sí"],
+        ["Word2Vec propio congelado", "Skip-gram con tickets y respuestas de train (como <code>w2v_all</code> de E2)", "No"],
+        ["Word2Vec propio fine-tuning", "Skip-gram con tickets y respuestas de train", "Sí"]])}
+<p>Para Google News mantenemos los <i>fallbacks</i> de E2 (mayúscula inicial, todo en mayúsculas y sin el posesivo
+<code>'s</code>); las palabras sin vector reciben uno aleatorio. Cobertura sobre el nuevo vocabulario:</p>
+{tabla(["Embedding", "Palabras del vocabulario con vector", "Tokens de test con vector"],
+       [[e(k), pct(v["tipos del vocabulario con vector"]), pct(v["tokens de test con vector"])] for k, v in COB.items()],
+       num=(1, 2))}
+<p>Google News cubre el {pct(COB['Google News']['tipos del vocabulario con vector'])} del vocabulario, en línea con E2.
+Por tokens baja al {pct(COB['Google News']['tokens de test con vector'])} porque aquí contamos también los signos de
+puntuación, que Google News no tiene y que las redes sí reciben.</p>
+<h2>3.3 Arquitecturas</h2>
+<p><b>CNN para texto (Kim, 2014).</b> Filtros de convolución de anchura 3, 4 y 5 recorren el ticket y cada uno se activa
+con un patrón de 3, 4 o 5 palabras seguidas. De cada filtro se toma su activación máxima (<i>max-over-time
+pooling</i>), las activaciones se concatenan y pasan por una capa densa con dropout y softmax. En el artículo original
+nuestras variantes se llaman <i>CNN-rand</i>, <i>CNN-static</i> y <i>CNN-non-static</i>.</p>
+<p><b>RNN bidireccional (LSTM o GRU).</b> Lee el ticket palabra a palabra en los dos sentidos. Las puertas de LSTM y GRU
+evitan el desvanecimiento del gradiente; el tipo de celda es un hiperparámetro más. El relleno se gestiona con
+<i>packed sequences</i>.</p>
+<p><b>Atención.</b> Sin atención, todo el ticket se resume en el último estado oculto. Con atención la red vuelve a
+mirar todos los estados. Seguimos el cálculo de la Unidad 3; como al clasificar no hay decoder, el «estado actual»
+<i>q</i> es el estado final de la RNN:</p>
 <ol>
-<li>Puntuación de cada estado oculto con el estado actual (producto escalar): <span class="formula">s<sub>t</sub> = h<sub>t</sub><sup>⊤</sup> q</span></li>
-<li>Softmax de las puntuaciones para obtener los pesos de atención: <span class="formula">α<sub>t</sub> = e<sup>s<sub>t</sub></sup> / Σ<sub>k</sub> e<sup>s<sub>k</sub></sup></span></li>
-<li>Suma de los estados ponderada por su peso (vector de contexto): <span class="formula">c = Σ<sub>t</sub> α<sub>t</sub> h<sub>t</sub></span></li>
-<li>El contexto se concatena con el estado actual, [<i>c</i>; <i>q</i>], y eso entra en la capa de salida.</li>
+<li>Puntuación de cada estado oculto con el estado actual (producto escalar): s<sub>t</sub> = h<sub>t</sub> · q.</li>
+<li>Softmax de las puntuaciones para obtener los pesos de atención α<sub>t</sub>.</li>
+<li>Vector de contexto: c = Σ α<sub>t</sub> h<sub>t</sub>.</li>
+<li>Se concatena [c ; q] y entra en la capa de salida.</li>
 </ol>
-<div class="nota"><p><b>Modelo adicional no visto exactamente en clase: atención «general» (Luong, Pham y Manning, 2015).</b>
-Es la misma atención con una matriz aprendida entre los dos vectores, <i>s<sub>t</sub></i> = <i>h<sub>t</sub></i><sup>⊤</sup>
-<i>W q</i>. La incluimos porque el producto escalar solo puede comparar <i>h<sub>t</sub></i> y <i>q</i> tal cual, mientras que
-<i>W</i> deja que la red aprenda qué buscar en cada estado. En el apartado 3.7 comparamos las dos.</p></div>
-<p>Las dos redes admiten además una entrada opcional con las meta-features del apartado 2.2, que pasan por una capa
-densa pequeña y se concatenan a la representación del texto antes de la capa de salida.</p>
-<h3>3.4 Entrenamiento</h3>
-<p>Todas las redes se entrenan igual, para que lo único que cambie entre experimentos sea lo que queremos comparar:
-entropía cruzada categórica, optimizador Adam (tasa {n(R['lr'], 3)}), lotes de {R['tam_lote']} tickets de longitud
-parecida, dropout antes de la capa de salida y <b><i>early stopping</i></b>: tras cada época se mide el F1 macro en
-validación y, si pasan {R['paciencia']} épocas sin mejorar, se para y se recupera el mejor modelo (máximo
-{R['max_epocas']} épocas). Cada configuración final se entrena con <b>{len(R['semillas'])} semillas</b> y damos la
-media y la desviación típica: una red cambia de un entrenamiento a otro por la inicialización aleatoria, así que una
-diferencia menor que esa desviación no es significativa.</p>
-<h3>3.5 Búsqueda de hiperparámetros</h3>
-<p>Igual que con los modelos clásicos, una rejilla evaluada en validación. Para no mezclarla con la comparación de
-embeddings se hace con una sola variante (Google News congelado) y una semilla, y los valores elegidos se mantienen
-fijos después. La RNN tarda bastante más en entrenar, así que su rejilla es más pequeña: hereda de la CNN el dropout y
-la decisión sobre los pesos por clase, que dependen sobre todo del desbalanceo de los datos. La tasa de aprendizaje,
-el tamaño de lote y las anchuras de filtro (3, 4, 5) se dejan en los valores habituales de la literatura.</p>
-<div class="bloque"><p><b>CNN</b> (ordenada por F1 de validación; en negrita, la elegida):</p>{cnn_grid}</div>
-<div class="bloque"><p><b>RNN bidireccional con atención</b> (dropout {n(HP['RNN']['dropout'], 1)} y pesos por clase
-{'sí' if HP['RNN']['pesos_clase'] else 'no'}, heredados de la CNN):</p>{rnn_grid}</div>
-{T['busqueda_deep']}
-<h3>3.6 Comparación de embeddings</h3>
-<p>Con los hiperparámetros fijados, cada arquitectura se entrena con las cinco variantes de embedding y tres
-semillas. Es el experimento central de la entrega.</p>
-{emb_res}
-{figura('03_comparacion_embeddings', 'Figura 3. F1 macro en test de cada combinación de arquitectura y embedding (media de 3 semillas; la línea fina es la desviación típica). La línea vertical marca el mejor modelo shallow.', '92%')}
-{T['embeddings']}
-{figura('04_curvas_aprendizaje', 'Figura 4. Curvas de aprendizaje de la CNN (primera semilla) con tres de las variantes de embedding.')}
-{T['curvas']}
-<h3>3.7 ¿Qué aporta la atención?</h3>
-<p>Entrenamos la misma RNN, con su mejor embedding ({e(ME['RNN'])}), de tres formas: sin atención (solo el estado
-final), con la atención de producto escalar de clase y con la variante general. Además del F1 medimos <b>dónde cae la
-atención</b>: qué parte del peso total se llevan el primer y el último token del ticket.</p>
-{att_tabla}
-{T['atencion']}
-{figura('05_atencion_ejemplo', 'Figura 5. Los diez tokens con más peso de atención en un mismo ticket de test, con cada variante (entre paréntesis, la posición del token).')}
-<p>Agregando los pesos sobre todo test, estas son las palabras que más atención reciben en los tickets asignados a
-cada cola (media del peso relativo; solo palabras que aparecen al menos 15 veces):</p>
-{att_top}
-{T['atencion_palabras']}
-<h3>3.8 Red híbrida: texto + meta-features</h3>
-<p>La misma idea del apartado 2.2 dentro de la red, con la mejor configuración de cada arquitectura:</p>
-{tabla_resultados('queue', filas=filas_meta)}
-{T['meta_deep']}
-""")
+<p><b>Modelo no visto en clase: atención «general» (Luong, Pham y Manning, 2015).</b> Es la misma atención con una matriz
+aprendida entre los dos vectores, s<sub>t</sub> = h<sub>t</sub> · W q. La incluimos porque el producto escalar solo
+compara h<sub>t</sub> y q tal cual, mientras que W deja que la red aprenda qué buscar en cada estado. La comparamos en
+el apartado 3.7.</p>
+<p>Las dos redes admiten además las meta-features del apartado 2.4, que pasan por una capa densa pequeña y se
+concatenan a la representación del texto antes de la salida.</p>
+<h2>3.4 Entrenamiento</h2>
+{lista(["Entropía cruzada categórica, optimizador Adam (tasa 0,001) y lotes de 64 tickets de longitud parecida.",
+        "Dropout antes de la capa de salida.",
+        f"<b>Early stopping</b>: tras cada época se mide el F1 macro en validación; si pasan {R['paciencia']} épocas sin "
+        f"mejorar se para y se recupera el mejor modelo. Máximo {R['max_epocas']} épocas.",
+        f"Cada configuración final se entrena con <b>{len(R['semillas'])} semillas</b> y damos media ± desviación típica. "
+        "Una diferencia menor que esa desviación no es significativa."])}
+<h2>3.5 Búsqueda de hiperparámetros</h2>
+<p>Rejilla evaluada en validación con una sola variante (Google News congelado) y una semilla; los valores elegidos se
+mantienen fijos en el resto de experimentos. La RNN tarda bastante más en entrenar, así que su rejilla es más pequeña y
+hereda de la CNN el dropout y los pesos por clase. La tasa de aprendizaje, el tamaño de lote y las anchuras de filtro
+se dejan en los valores habituales.</p>
+<div class="bloque">{tabla(["Filtros", "Dropout", "Pesos por clase", "F1 validación", "Mejor época"],
+       [[b["n_filtros"], n(b["dropout"], 1), "sí" if b["pesos_clase"] else "no", n(b["f1_val"]), f"{b['mejor_epoca']:.0f}"]
+        for b in BQ["CNN"]], num=(0, 1, 3, 4), negrita=(0,))}</div>
+<div class="bloque">{tabla(["Celda", "Estado oculto", "F1 validación", "Mejor época", "Tiempo (s)"],
+       [[b["celda"], b["oculto"], n(b["f1_val"]), f"{b['mejor_epoca']:.0f}", f"{b['segundos']:.0f}"] for b in BQ["RNN"]],
+       num=(1, 2, 3, 4), negrita=(0,))}</div>
+<p><b>Decisión.</b> En la CNN pesa sobre todo el número de filtros: las cuatro configuraciones con 200 filtros superan a
+las cuatro con 100, y entre ellas el F1 varía menos de dos puntos ({n(min(cnn200))} a {n(max(cnn200))}). Elegimos 200
+filtros, dropout {n(HP['CNN']['dropout'], 1)} y sin pesos por clase. En la RNN gana una <b>{RNN}</b> de
+{HP['RNN']['oculto']} unidades, muy por debajo de la CNN. En las dos redes la mejor capacidad es la mayor que probamos,
+así que podrían mejorar con más; no lo ampliamos por tiempo de cómputo. Además, una configuración llegó a su mejor
+resultado en la época {ep_max['mejor_epoca']:.0f}, por eso el máximo de épocas es {R['max_epocas']} y no 40.</p>
+<h2>3.6 Comparación de embeddings</h2>
+<p>Con los hiperparámetros fijados, cada arquitectura se entrena con las cinco variantes y tres semillas:</p>
+{tabla(["Embedding", "CNN: F1 val.", "CNN: F1 test", f"{RNN}: F1 val.", f"{RNN}: F1 test"],
+       [[e(emb), n(C[emb]["f1_val"]), f'{n(C[emb]["f1_test"])} <span class="std">± {n(C[emb]["f1_test_std"])}</span>',
+         n(Rn[emb]["f1_val"]), f'{n(Rn[emb]["f1_test"])} <span class="std">± {n(Rn[emb]["f1_test_std"])}</span>']
+        for emb in EMBS], num=(1, 2, 3, 4))}
+{figura("03_comparacion_embeddings", "Figura 1. F1 macro en test de cada arquitectura y embedding (media de 3 semillas). La línea vertical es la mejor SVM.", "82%")}
+<p><b>Embeddings preentrenados.</b> En la CNN, partir de vectores preentrenados mejora unos dos puntos al aleatorio (de
+{n(C['Aleatorio']['f1_test'])} a {n(C['Google News congelado']['f1_test'])}–{n(C['Google News fine-tuning']['f1_test'])}),
+más que la variación entre semillas (como mucho ± {n(std_cnn)}). Con {miles(P['train'])} tickets de entrenamiento la red no
+tiene datos suficientes para aprender desde cero lo que Word2Vec ya sabe.</p>
+<p><b>Congelado o fine-tuning.</b> Con Google News da igual ({n(C['Google News congelado']['f1_test'])} y
+{n(C['Google News fine-tuning']['f1_test'])}): sus vectores ya son buenos. Con nuestro Word2Vec, entrenado con solo
+2,2 millones de tokens, el fine-tuning sí ayuda ({n(C['Word2Vec propio congelado']['f1_test'])} →
+{n(C['Word2Vec propio fine-tuning']['f1_test'])}). El fine-tuning además converge antes (mejor época
+{C['Google News fine-tuning']['mejor_epoca']:.0f} frente a {C['Google News congelado']['mejor_epoca']:.0f}).</p>
+<p><b>La RNN.</b> La {RNN} queda entre doce y catorce puntos por debajo de la CNN con cada embedding. Los embeddings
+congelados no le aportan nada frente a los aleatorios y lo que más ayuda es el fine-tuning del Word2Vec propio
+({n(Rn['Word2Vec propio fine-tuning']['f1_test'])}). Nuestra interpretación es que la RNN tiene que resumir tickets de
+unos 70 tokens en un único vector, mientras que a la CNN le basta con detectar unos pocos n-gramas característicos.</p>
+<h2>3.7 Atención</h2>
+<p>Entrenamos la misma {RNN}, con su mejor embedding ({e(ME['RNN'])}), sin atención, con la atención de clase y con la
+variante general. Además del F1 medimos dónde cae la atención:</p>
+{tabla(["Variante", "Accuracy", "F1 macro", "Peso en el primer y último token", "Peso del token más atendido"],
+       [[e(a["variante"]), n(a["accuracy"]), f'{n(a["f1"])} <span class="std">± {n(a["f1_std"])}</span>',
+         pct(a.get("atención en primer y último token")), pct(a.get("peso del token más atendido"))] for a in R["atencion_tabla"]],
+       num=(1, 2, 3, 4))}
+<p><b>En el F1 no hay diferencias</b>: las tres variantes quedan dentro de la variación entre semillas. Nuestros tickets
+son cortos y lo que limita a la RNN no parece ser el cuello de botella del estado final.</p>
+<p><b>Donde sí se nota es en qué mira la red.</b> La atención es muy selectiva: el token más atendido se lleva de media
+el {pct(AT_DOT['peso del token más atendido'], 0)} del peso con producto escalar y el
+{pct(AT_GEN['peso del token más atendido'], 0)} con la variante general, es decir, la red decide casi siempre por una
+palabra (en la figura 2, <i>payment</i>). Además, la atención por producto escalar dedica el
+{pct(AT_DOT['atención en primer y último token'])} del peso al primer y al último token, frente al
+{pct(AT_GEN['atención en primer y último token'])} de la general. Es un efecto de usar el estado final como consulta: el
+estado del primer token contiene el final de la lectura hacia atrás y el del último, el de la lectura hacia delante, así
+que su producto escalar con la consulta sale alto aunque esas palabras no digan nada. La matriz W lo evita.</p>
+{figura("05_atencion_ejemplo", "Figura 2. Los diez tokens con más peso de atención en un ticket de test, con cada variante.", "92%")}
+<p>Agregando sobre todo test, en <i>Billing and Payments</i> la atención va a <i>billing</i>, <i>invoice</i> y
+<i>payment</i>, y en <i>Service Outages and Maintenance</i> a <i>outage</i>, <i>maintenance</i> y <i>disruption</i>. En
+las dos colas más pequeñas, <i>General Inquiry</i> y <i>Human Resources</i>, atiende sobre todo a palabras vacías: no ha
+encontrado palabras que las identifiquen.</p>""")
 
-# 4. Prioridad y tipo
-secciones.append(f"""
-<h2 style="margin-top:8mm">4. Las otras dos salidas: prioridad y tipo</h2>
-<p>Repetimos el proceso para las otras dos etiquetas de E1. Los modelos clásicos repiten su búsqueda en rejilla
-completa (es barata). Las redes reutilizan los hiperparámetros y el mejor embedding encontrados para la cola;
-optimizarlos para cada tarea queda para la siguiente iteración.</p>
-<h3>4.1 Prioridad (3 clases)</h3>
-{tabla_resultados('priority', extra_high=True)}
-{T['prioridad']}
-<h3>4.2 Tipo (4 clases)</h3>
-{tabla_resultados('type')}
-{T['tipo']}
-""")
+cm_, cs_ = deep(f"{NA['CNN']} + meta-features · {ME['CNN']}"), deep(f"{NA['CNN']} · {ME['CNN']}")
+rm_, rs_ = deep(f"{NA['RNN']} + meta-features · {ME['RNN']}"), deep(f"{NA['RNN']} · {ME['RNN']}")
+S.append(f"""<h2>3.8 Red híbrida: texto + meta-features</h2>
+<p>La misma idea del apartado 2.4, dentro de la red y con la mejor configuración de cada arquitectura:</p>
+{tabla(["Modelo", "F1 validación", "F1 test"],
+       [[e(x["modelo"]), n(x["f1_val"]), f'{n(x["f1_test"])} <span class="std">± {n(x["f1_test_std"])}</span>'] for x in (cs_, cm_, rs_, rm_)],
+       num=(1, 2))}
+<p>En la CNN, las meta-features suben el F1 de test ({n(cs_['f1_test'])} → {n(cm_['f1_test'])}) pero lo bajan en
+validación ({n(cs_['f1_val'])} → {n(cm_['f1_val'])}). Como elegimos los modelos por validación, no lo damos por una
+mejora real. En la {RNN} no cambian nada. Es coherente con el apartado 2.5.</p>""")
 
-# 5. Comparativa y errores
-INF_CL = [c for c in R["informe_clases"] if c["clase"] not in ("accuracy", "macro avg", "weighted avg")]
-cl_tabla = tabla(["Cola", "Precision", "Recall", "F1", "Tickets en test"],
-                 [[e(c["clase"]), n(c["precision"]), n(c["recall"]), n(c["f1-score"]), miles(c["support"])]
-                  for c in sorted(INF_CL, key=lambda c: -c["f1-score"])])
-conf_tabla = tabla(["Cola real", "Cola predicha", "Tickets"],
-                   [[e(c["real"]), e(c["predicha"]), miles(c["tickets"])] for c in R["confusiones"]], num_desde=2)
-secciones.append(f"""
-<h2 class="nueva">5. Tabla comparativa final (cola)</h2>
-<p>Todos los modelos de la tarea principal, ordenados por F1 macro en test. En los modelos deep, cada cifra es la media
-de {len(R['semillas'])} semillas (en gris, la desviación típica).</p>
-{tabla_resultados('queue')}
-{figura('06_ranking_cola', 'Figura 6. F1 macro en test de todos los modelos de la cola. Azul: shallow; naranja: deep; gris: referencia.', '94%')}
-{T['comparativa']}
-<h2 class="nueva">6. Análisis de errores</h2>
-<p>Analizamos el mejor modelo de la cola según validación, <b>{e(R['mejor_modelo_cola'])}</b>.</p>
-{figura('07_matriz_confusion', 'Figura 7. Matriz de confusión normalizada por filas: cada fila muestra a qué colas se asignan los tickets de una cola real.', '80%')}
-<div class="bloque">{cl_tabla}</div>
-<div class="bloque"><p>Las confusiones más frecuentes:</p>{conf_tabla}</div>
-{T['errores']}
-""")
 
-# 7. Conclusiones y referencias
-secciones.append(f"""
-<h2 class="nueva">7. Conclusiones y siguientes pasos</h2>
-{T['conclusiones']}
-<h3>Siguientes pasos</h3>
-{T['siguientes']}
-<h3>Referencias</h3>
-<ul class="refs">
-<li>Kim, Y. (2014). Convolutional Neural Networks for Sentence Classification. <i>EMNLP</i>.</li>
-<li>Bahdanau, D., Cho, K. y Bengio, Y. (2015). Neural Machine Translation by Jointly Learning to Align and Translate. <i>ICLR</i>.</li>
-<li>Luong, M.-T., Pham, H. y Manning, C. D. (2015). Effective Approaches to Attention-based Neural Machine Translation. <i>EMNLP</i>.</li>
-<li>Mikolov, T. et al. (2013). Distributed Representations of Words and Phrases and their Compositionality. <i>NeurIPS</i>.</li>
-<li>Hochreiter, S. y Schmidhuber, J. (1997). Long Short-Term Memory. <i>Neural Computation</i>, 9(8).</li>
-<li>Cho, K. et al. (2014). Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation. <i>EMNLP</i>.</li>
-<li>Rennie, J. et al. (2003). Tackling the Poor Assumptions of Naive Bayes Text Classifiers. <i>ICML</i> (Complement Naive Bayes).</li>
-<li>Zangari, A. et al. (2023). Ticket automation: An insight into current research with applications to multi-level classification scenarios. <i>Expert Systems with Applications</i>.</li>
-<li>Dataset: Bueck, T. <i>Customer Support Tickets</i>. Hugging Face, <code>Tobi-Bueck/customer-support-tickets</code>.</li>
-<li>Apuntes de la asignatura, Unidades 2 (embeddings) y 3 (shallow learning, CNN, RNN y mecanismos de atención). Librerías: scikit-learn, PyTorch y gensim.</li>
-</ul>
-""")
+# ----------------------------------------------------------------------------- 4. prioridad y tipo
+def top2(t):
+    filas = sorted((r for r in R["resultados"] if r["tarea"] == t and r["familia"] != "Baseline"), key=lambda r: -r["f1"])
+    return filas[0], next(r for r in filas if r["familia"] != filas[0]["familia"])
 
-documento = f"""<!doctype html><html lang="es"><head><meta charset="utf-8">
-<title>E3 · Gestión de Tickets</title><style>{CSS}</style></head><body>{''.join(secciones)}</body></html>"""
+
+pr1, pr2 = top2("priority")
+ty1, ty2 = top2("type")
+pr_cnn, ty_cnn = deep(f"{NA['CNN']} · {ME['CNN']}", "priority"), deep(f"{NA['CNN']} · {ME['CNN']}", "type")
+S.append(h1("4. Prioridad y tipo",
+            "Repetimos el proceso para las otras dos etiquetas de E1. Los modelos clásicos repiten su búsqueda en rejilla; "
+            "las redes reutilizan los hiperparámetros y el mejor embedding de la cola."))
+S.append(f"""<h2>4.1 Prioridad (3 clases)</h2>
+{tabla_res("priority", high=True)}
+<p>La prioridad es bastante más difícil que el tipo. La CNN ({n(pr1['f1'])}) y la SVM ({n(pr2['f1'])}) quedan
+prácticamente empatadas (la diferencia es del orden de la desviación entre semillas, ± {n(pr_cnn['f1_test_std'])}) y las
+dos recuperan en torno al {pct(pr1['recall_high'], 0)} de los tickets urgentes. Es decir, más de uno de cada cuatro tickets
+de prioridad alta se clasifica como media o baja. La urgencia depende de cosas como cuánta gente está afectada, más que de
+palabras concretas.</p>
+<h2>4.2 Tipo (4 clases)</h2>
+{tabla_res("type")}
+<p>El tipo es la tarea más fácil. Aquí la CNN ({n(ty1['f1'])}) sí supera a la SVM ({n(ty2['f1'])}) por un punto, unas tres
+veces su desviación entre semillas (± {n(ty_cnn['f1_test_std'])}). Nuestra interpretación es que el tipo (incidencia,
+petición, problema o cambio) se expresa con fórmulas muy repetidas que la CNN detecta bien como n-gramas.</p>""")
+
+# ----------------------------------------------------------------------------- 5. comparativa
+S.append(h1("5. Tabla comparativa final",
+            f"Todos los modelos de la tarea principal (cola), ordenados por F1 macro en test. En los modelos deep, cada "
+            f"cifra es la media de {len(R['semillas'])} semillas y en gris va la desviación típica."))
+S.append(f"""{tabla_res("queue")}
+<p>En la cola, los dos mejores modelos son lineales sobre TF-IDF: la SVM ({n(SVM['f1'])}) y la regresión logística
+({n(LR['f1'])}). La mejor CNN queda a unos cuatro puntos ({n(CNN_Q['f1'])}) y la mejor {RNN}, a más de quince
+({n(RNN_Q['f1'])}). Todos los modelos que usan el texto tienen más precision que recall: son conservadores con las colas
+pequeñas. Que las redes no ganen en la cola tiene, a nuestro juicio, tres causas:</p>
+{lista([f"{miles(P['train'])} tickets de entrenamiento son pocos para que una red aprenda una representación mejor que los bigramas que TF-IDF ya cuenta.",
+        "La cola depende sobre todo de palabras y expresiones clave (la atención se concentra en una sola palabra), y eso lo captura directamente un modelo lineal sobre bigramas.",
+        "Las redes están menos ajustadas: su rejilla es más pequeña y su mejor capacidad cae en el extremo de lo probado."])}
+<p>En prioridad y tipo, en cambio, la CNN iguala o supera a la SVM, así que no hay una familia que gane en todas las tareas.</p>""")
+
+# ----------------------------------------------------------------------------- 6. errores
+orden = sorted(COLAS, key=lambda c: -CL[c]["f1-score"])
+gi = CL["General Inquiry"]
+soporte = {"Technical Support", "Product Support", "IT Support", "Customer Service"}
+n_sop = sum(1 for c in R["confusiones"] if c["real"] in soporte and c["predicha"] in soporte)
+S.append(h1("6. Análisis de errores",
+            f"Analizamos el mejor modelo de la cola según validación, {e(R['mejor_modelo_cola'])}. En la práctica es la SVM "
+            f"sola: las meta-features entran con el peso mínimo y sus métricas de test coinciden."))
+S.append(f"""{figura("07_matriz_confusion", "Figura 3. Matriz de confusión normalizada por filas: a qué colas van los tickets de cada cola real.", "68%")}
+{tabla(["Cola", "Precision", "Recall", "F1", "Tickets en test"],
+       [[e(c), n(CL[c]["precision"]), n(CL[c]["recall"]), n(CL[c]["f1-score"]), miles(CL[c]["support"])] for c in orden],
+       num=(1, 2, 3, 4))}
+<div class="bloque"><p>Las confusiones más frecuentes:</p>
+{tabla(["Cola real", "Cola predicha", "Tickets"], [[e(c["real"]), e(c["predicha"]), miles(c["tickets"])] for c in R["confusiones"]], num=(2,))}</div>
+<p><b>Qué vemos.</b> Las colas mejor resueltas son las que tienen un vocabulario propio: <b>{orden[0]}</b> (F1
+{n(CL[orden[0]]['f1-score'])}) y <b>{orden[1]}</b> ({n(CL[orden[1]]['f1-score'])}). Los errores se concentran en cuatro colas
+que se solapan, <b>Technical Support, Product Support, IT Support y Customer Service</b>: {n_sop} de las
+{len(R['confusiones'])} confusiones más frecuentes son entre ellas. Su contenido se parece mucho; por ejemplo, de los
+tickets que mencionan <i>data breach</i>, el 38 % va a Technical Support, el 20 % a Product Support y el 12 % a
+Customer Service. Si el mismo tipo de problema se reparte entre colas, ningún modelo basado solo en el texto puede
+acertarlas todas.</p>
+<p><b>General Inquiry</b>, la cola más pequeña ({miles(gi['support'])} tickets en test), tiene precision alta
+({n(gi['precision'])}) y recall bajo ({n(gi['recall'])}): el modelo casi nunca la predice y, cuando lo hace, acierta.</p>""")
+
+# ----------------------------------------------------------------------------- 7. conclusiones
+S.append(h1("7. Conclusiones y siguientes pasos",
+            "Resumen de lo que hemos aprendido en esta primera iteración y de lo que haremos en la siguiente."))
+S.append(f"""<ol>
+<li><b>Datos.</b> Quitar los duplicados era imprescindible: con la partición de E2, uno de cada cuatro tickets de test
+estaba también en train. Todos los resultados están medidos sin esa fuga y con validación separada de test.</li>
+<li><b>Shallow learning.</b> La SVM lineal sobre TF-IDF con unigramas y bigramas sin stopwords es el mejor modelo para la
+cola (F1 macro {n(SVM['f1'])}) y un baseline muy difícil de batir. Las meta-features de forma no aportan.</li>
+<li><b>Deep learning.</b> La CNN funciona claramente mejor que la RNN ({n(CNN_Q['f1'], 2)} frente a {n(RNN_Q['f1'], 2)} en la
+cola). Los embeddings preentrenados aportan unos dos puntos y el fine-tuning solo ayuda cuando los vectores de partida
+son pobres.</li>
+<li><b>Atención.</b> No mejora el F1, pero muestra que la red decide casi siempre por una sola palabra, y nos ha permitido
+detectar el sesgo de la atención por producto escalar hacia los extremos del ticket.</li>
+<li><b>Prioridad y tipo.</b> El tipo se resuelve bien (F1 {n(ty1['f1'])}); la prioridad no tanto (F1 {n(pr1['f1'])}, con un
+{pct(pr1['recall_high'], 0)} de recall en la clase urgente).</li>
+<li><b>Límite del problema.</b> Gran parte del error de la cola está en cuatro departamentos cuyos tickets se parecen
+mucho; probablemente una parte no se pueda resolver solo con el texto.</li>
+</ol>
+<h2>Siguientes pasos</h2>
+{lista(["Más capacidad en las redes y ajustar sus hiperparámetros para prioridad y tipo.",
+        "Fine-tuning de un Transformer tipo BERT o DistilBERT (Unidad 4).",
+        "Pre-entrenar con datasets parecidos, por ejemplo las conversaciones de soporte de Twitter de TweetSumm.",
+        "Mejorar el recall de la prioridad alta ajustando el umbral de decisión de esa clase.",
+        "Clasificar las cuatro colas de soporte de forma jerárquica, como Zangari et al. (2023).",
+        "Segunda tarea del proyecto: resumen de conversaciones de TweetSumm con un seq2seq con atención, evaluado con ROUGE."])}
+<h2>Referencias</h2>
+<div class="refs">{lista(["Kim, Y. (2014). Convolutional Neural Networks for Sentence Classification. EMNLP.",
+        "Luong, M.-T., Pham, H. y Manning, C. D. (2015). Effective Approaches to Attention-based Neural Machine Translation. EMNLP.",
+        "Bahdanau, D., Cho, K. y Bengio, Y. (2015). Neural Machine Translation by Jointly Learning to Align and Translate. ICLR.",
+        "Mikolov, T. et al. (2013). Distributed Representations of Words and Phrases and their Compositionality. NeurIPS.",
+        "Rennie, J. et al. (2003). Tackling the Poor Assumptions of Naive Bayes Text Classifiers. ICML.",
+        "Zangari, A. et al. (2023). Ticket automation: An insight into current research with applications to multi-level classification scenarios. Expert Systems with Applications.",
+        "Dataset: Tobi-Bueck/customer-support-tickets (Hugging Face). Librerías: scikit-learn, PyTorch y gensim."])}</div>""")
+
+documento = (f'<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Gestión de Tickets · E3</title>'
+             f'<style>{CSS}</style></head><body>{"".join(S)}</body></html>')
 SALIDA_HTML.write_text(documento, encoding="utf-8")
 print("HTML:", SALIDA_HTML)
-
-if "--solo-html" in sys.argv:
-    sys.exit(0)
 with tempfile.TemporaryDirectory() as perfil:
     subprocess.run([str(EDGE), "--headless=new", "--disable-gpu", "--no-pdf-header-footer", f"--user-data-dir={perfil}",
                     "--virtual-time-budget=20000", f"--print-to-pdf={SALIDA_PDF}", SALIDA_HTML.as_uri()],
