@@ -15,15 +15,16 @@
 # | 2 | Preprocesado de E2 y partición train / validación / test | Features de E2 |
 # | 3 | Métricas y registro de resultados | Accuracy, precision, recall y F1 |
 # | 4 | **Shallow learning** con TF-IDF: Naive Bayes, Regresión logística y SVM | 2 técnicas con representación dispersa |
-# | 5 | **Deep learning**: CNN y BiLSTM con atención, comparando embeddings | 2 técnicas comparando embeddings y fine-tuning |
+# | 5 | **Deep learning**: CNN y RNN bidireccional (LSTM o GRU) con atención, comparando embeddings | 2 técnicas comparando embeddings y fine-tuning |
 # | 6 | Prioridad y tipo con las mejores configuraciones | Las otras dos salidas de E1 |
 # | 7 | Tabla comparativa final y análisis de errores | Tabla comparativa |
+# | 8 | Conclusiones y siguientes pasos | |
 #
-# Extras que el enunciado valora: **atención** (5.7) y **combinar features no textuales** (4.4 y 5.8).
+# Extras que el enunciado valora: **atención** (5.7) y **combinar features no textuales** (4.2 y 5.8).
 #
-# > El notebook se puede ejecutar tanto desde `src/` como desde la raíz del proyecto y tarda unos
-# > 45 minutos con GPU. Con la variable de entorno `E3_FAST=1` hace una pasada rápida de prueba con
-# > menos datos.
+# > El notebook se puede ejecutar tanto desde `src/` como desde la raíz del proyecto y tarda unas
+# > dos horas con una GPU NVIDIA RTX 3050. Con la variable de entorno `E3_FAST=1` hace una pasada
+# > rápida de prueba con menos datos (unos 2 minutos).
 
 # %% [markdown]
 # ## 0. Configuración
@@ -64,7 +65,7 @@ pd.set_option("display.max_colwidth", 90)
 SEED = 42
 FAST = os.environ.get("E3_FAST", "0") == "1"       # pasada rápida de prueba
 SEEDS = [42] if FAST else [42, 43, 44]             # semillas para los modelos deep
-MAX_EPOCHS = 2 if FAST else 40
+MAX_EPOCHS = 2 if FAST else 60
 N_JOBS = max(1, min(8, (os.cpu_count() or 2) - 2))
 
 ROOT = Path.cwd().parent if Path.cwd().name == "src" else Path.cwd()
@@ -425,13 +426,25 @@ for nombre, cfg in VEC_CONFIGS.items():
 # - **Regresión logística y SVM**: `C`, la inversa de la regularización (C alto deja al modelo
 #   ajustarse más a train), y `class_weight`, que con `balanced` penaliza más los errores en las
 #   clases pequeñas.
+#
+# | Modelo | Hiperparámetro | Valores |
+# |---|---|---|
+# | todos | TF-IDF | unigramas / uni+bigramas, con o sin stopwords |
+# | Naive Bayes | variante | Multinomial, Complement |
+# | Naive Bayes | `alpha` | 0,0003 · 0,001 · 0,003 · 0,01 · 0,03 · 0,1 · 0,3 · 1 |
+# | Regresión logística | `C` | 1 · 10 · 100 · 1000 |
+# | SVM lineal | `C` | 0,1 · 0,3 · 1 · 3 · 10 · 30 · 100 |
+# | Regresión logística y SVM | `class_weight` | ninguno, `balanced` |
+#
+# Los rangos de `C` y `alpha` se ampliaron dos veces, porque en las primeras pruebas el mejor valor
+# caía en el extremo de la rejilla: si el óptimo está en el borde, no sabemos si seguiría mejorando.
 
 # %%
 GRIDS = {
     "Naive Bayes": [{"variante": v, "alpha": a} for v in ("multinomial", "complement")
-                    for a in (0.01, 0.05, 0.1, 0.3, 1.0)],
-    "Regresión logística": [{"C": c, "class_weight": w} for c in (1, 10, 100) for w in (None, "balanced")],
-    "SVM lineal": [{"C": c, "class_weight": w} for c in (0.03, 0.1, 0.3, 1, 3) for w in (None, "balanced")],
+                    for a in (0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0)],
+    "Regresión logística": [{"C": c, "class_weight": w} for c in (1, 10, 100, 1000) for w in (None, "balanced")],
+    "SVM lineal": [{"C": c, "class_weight": w} for c in (0.1, 0.3, 1, 3, 10, 30, 100) for w in (None, "balanced")],
 }
 if FAST:
     GRIDS = {k: v[:2] for k, v in GRIDS.items()}
@@ -441,8 +454,8 @@ def crear_shallow(nombre, p):
     if nombre == "Naive Bayes":
         return (ComplementNB if p["variante"] == "complement" else MultinomialNB)(alpha=p["alpha"])
     if nombre == "Regresión logística":
-        return LogisticRegression(C=p["C"], class_weight=p["class_weight"], max_iter=1000)
-    return LinearSVC(C=p["C"], class_weight=p["class_weight"])
+        return LogisticRegression(C=p["C"], class_weight=p["class_weight"], max_iter=3000)
+    return LinearSVC(C=p["C"], class_weight=p["class_weight"], max_iter=5000)
 
 
 def _probar(nombre, p, vec_nombre, Xtr, ytr, Xva, yva):

@@ -121,7 +121,8 @@ def nombre_arq(arq, hp):
 #
 # - Función de pérdida: entropía cruzada categórica. Optimizador **Adam**, lotes de 64 tickets.
 # - ***Early stopping***: tras cada época se mide el F1 macro en validación; si pasan 5 épocas
-#   sin mejorar se para y se recupera el mejor modelo. El máximo son 40 épocas.
+#   sin mejorar se para y se recupera el mejor modelo. El máximo son 60 épocas (en una primera
+#   prueba con 40, la CNN con embeddings congelados aún mejoraba en la época 39).
 # - **Dropout** antes de la capa de salida.
 # - Cada lote junta tickets de longitud parecida, para rellenar menos y entrenar más rápido.
 # - Cada configuración final se entrena con **3 semillas** y se da la media y la desviación
@@ -567,3 +568,36 @@ resumen = {
 (ART_DIR / "resultados.json").write_text(json.dumps(limpio(resumen), ensure_ascii=False, indent=1), encoding="utf-8")
 FINAL.to_csv(ART_DIR / "resultados.csv", index=False)
 print("Guardado en", ART_DIR / "resultados.json")
+
+# %% [markdown]
+# ## 8. Conclusiones y siguientes pasos
+#
+# Cifras de la ejecución completa (F1 macro en test; en las redes, media de 3 semillas):
+#
+# | Tarea | Mejor modelo shallow | Mejor CNN | Mejor RNN | Clase mayoritaria |
+# |---|---|---|---|---|
+# | Cola (10 clases) | **TF-IDF + SVM lineal: 0,680** | Google News fine-tuning: 0,638 | BiGRU + atención general, Word2Vec propio fine-tuning: 0,528 | 0,045 |
+# | Prioridad (3 clases) | TF-IDF + SVM lineal: 0,685 | **Google News congelado: 0,691** | Word2Vec propio fine-tuning: 0,608 | 0,196 |
+# | Tipo (4 clases) | TF-IDF + SVM lineal: 0,884 | **Google News congelado: 0,894** | Word2Vec propio fine-tuning: 0,853 | 0,143 |
+#
+# 1. **Datos.** Quitar los duplicados entre ficheros era imprescindible: con la partición de E2, uno de cada cuatro
+#    tickets de test tenía un gemelo en train y la accuracy subía unos 9 puntos sin que el modelo fuera mejor.
+# 2. **Shallow learning.** La SVM lineal sobre TF-IDF con unigramas y bigramas sin stopwords es el mejor modelo de la
+#    cola y un baseline muy difícil de batir. Los bigramas son lo que más aporta y la regularización óptima es débil.
+# 3. **Deep learning.** La CNN funciona claramente mejor que la RNN (unos 12-14 puntos más en la cola). Los embeddings
+#    preentrenados aportan unos dos puntos frente a los aleatorios, y el fine-tuning solo ayuda cuando los vectores de
+#    partida son pobres (nuestro Word2Vec, entrenado con poco texto).
+# 4. **Atención.** No mejora el F1, pero muestra que la red decide casi siempre por una sola palabra. La atención por
+#    producto escalar con el estado final como consulta se desvía hacia el primer y el último token; la variante
+#    general lo corrige.
+# 5. **Meta-features.** No aportan a la cola ni en los modelos lineales ni en las redes.
+# 6. **Prioridad y tipo.** El tipo se resuelve bien; la prioridad no tanto, y más de uno de cada cuatro tickets
+#    urgentes se clasifica como no urgente.
+# 7. **Límite del problema.** La mayor parte de los errores de la cola están entre cuatro departamentos de soporte
+#    (Technical, Product, IT y Customer Service) cuyos tickets se parecen mucho.
+#
+# **Siguientes pasos:** más capacidad en las redes (el óptimo cayó en el extremo de la rejilla) y ajuste de sus
+# hiperparámetros para prioridad y tipo; fine-tuning de un Transformer (Unidad 4); pre-entrenar con conversaciones de
+# soporte parecidas; mejorar el recall de la prioridad alta ajustando el umbral; clasificación jerárquica de las
+# colas de soporte; y la segunda tarea del proyecto, el resumen de conversaciones de TweetSumm con un modelo
+# sequence-to-sequence con atención evaluado con ROUGE.

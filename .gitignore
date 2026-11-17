@@ -6,3 +6,6 @@ __pycache__/
 
 # Notas locales de Claude (no se suben)
 CLAUDE.md
+
+# HTML intermedio del informe (se regenera con informe/generar_informe.py)
+informe/E3_informe.html
